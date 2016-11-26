@@ -49,7 +49,7 @@ void getch(void)
 // gets a symbol from input stream.
 void getsym(void)
 {
-	int i, k;
+	int i, j, k;
 	char a[MAXIDLEN + 1];
 
 	while (ch == ' ') {
@@ -69,13 +69,23 @@ void getsym(void)
 		while (isalpha(ch) || isdigit(ch));
 		a[k] = 0;
 		strcpy(id, a);
-		word[0] = id;
-		i = NRW;
-		while (strcmp(id, word[i--]));
-		if (++i)
-			sym = wsym[i]; // symbol is a reserved word
-		else
-			sym = SYM_IDENTIFIER;   // symbol is an identifier
+		//optimization: using bsearch to judge 'id' is a reserved word or not  
+		i = 1;
+		j = NRW;
+		do {
+			k = (i + j) / 2;
+			if (strcmp(id, word[k]) <= 0) {
+				j = k - 1;
+			}
+			if (strcmp(id, word[k]) >= 0) {
+				i = k + 1;
+			}
+		}while (i <= j);
+		if (i - 1 > j) {
+			sym = wsym[k];// symbol is a reserved word
+		}else {
+			sym = SYM_IDENTIFIER;// symbol is an identifier
+		}
 	}
 	else if (isdigit(ch))
 	{ // symbol is a number.
@@ -882,7 +892,7 @@ void main ()
 
 	phi = createset(SYM_NULL);
 	relset = createset(SYM_EQU, SYM_NEQ, SYM_LES, SYM_LEQ, SYM_GTR, SYM_GEQ, SYM_NULL);
-	
+
 	// create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
 	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
