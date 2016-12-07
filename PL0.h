@@ -64,7 +64,7 @@ enum oprcode
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
-	OPR_GEQ
+	OPR_GEQ, OPR_CPY
 };
 
 
@@ -107,7 +107,7 @@ char* err_msg[] =
 /* 26 */    "There are too many actual parameters.",
 /* 27 */    "There are too few actual parameters.",
 /* 28 */    "Missing ':'.",
-/* 29 */    "",
+/* 29 */    "vardeclaration expected",
 /* 30 */    "",
 /* 31 */    "",
 /* 32 */    "There are too many levels."

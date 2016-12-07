@@ -21,6 +21,7 @@ void error(int n)
 	printf("Error %3d: %s\n", n, err_msg[n]);
 	err++;
 } // error
+
 //////////////////////////////////////////////////////////////////////
 void free_para_link(mask *begin, mask *end) {
 	for (; begin != end; ++ begin) {
@@ -31,19 +32,18 @@ void free_para_link(mask *begin, mask *end) {
 			while (1) {
 				if (p->para_link == NULL) {
 					free(p);
-					p = NULL;
 					break;
 				}
 				else {
 					pre = p;
 					p = p->para_link;
 					free(pre);
-					pre = NULL;
 				}
 			}
 		}
 	}
-}//free the parameter link
+} // free the parameter link
+
 //////////////////////////////////////////////////////////////////////
 void getch(void)
 {
@@ -290,7 +290,7 @@ int position(char* id)
 } // position
 
 //////////////////////////////////////////////////////////////////////
-void constdeclaration()
+void constdeclaration(void)
 {
 	if (sym == SYM_IDENTIFIER)
 	{
@@ -479,15 +479,18 @@ void expression(symset fsys)
 //////////////////////////////////////////////////////////////////////
 void actual_parameters_line(symset fsys, mask const *prcd)
 {
+    symset set, set1;
 	assert(prcd != NULL);
 	while (1) {
-		expression(uniteset(fsys, SYM_COMMA));
+        set1 = createset(SYM_COMMA, SYM_NULL);
+        set = uniteset(fsys, set1);
+		expression(set);
 		if (prcd->para_link == NULL) {
 			error(26);
 		}
 		else {
 			prcd = prcd->para_link;
-			gen(OPR, 0, 30);
+			gen(OPR, 0, OPR_CPY);
 		}
 		if (sym == SYM_COMMA) {
 			getsym();
@@ -602,9 +605,27 @@ void statement(symset fsys)
 			}
 			else if (table[i].kind == ID_PROCEDURE)
 			{
+				getsym();
 				mask* mk;
 				mk = (mask*) &table[i];
-				gen(CAL, level - mk->level, mk->address);
+				if (sym == SYM_LPAREN) {
+					getsym();
+                    set1 = createset(SYM_RPAREN, SYM_NULL);
+					set = uniteset(fsys, set1);
+					actual_parameters_line(set, mk);
+					gen(REVA, 0, mk->para_num);
+					gen(CAL, level - mk->level, mk->address);
+					gen(POPA, 0, mk->para_num);
+					if (sym == SYM_RPAREN) {
+						getsym();
+					}
+					else {
+						error(22);
+					}
+				}
+				else {
+					gen(CAL, level - mk->level, mk->address);
+				}
 			}
 			else
 			{
@@ -698,16 +719,19 @@ void formal_parameter_line()
 	assert(prcd->para_link == NULL);
 
 	while (1) {
-		vardeclaration();
-		if (sym == SYM_COLON) {
+        if (sym == SYM_VAR) {
+            getsym();
+            vardeclaration();
+        }
+        else error(29);
+		/*if (sym == SYM_COLON) {
 			getsym();
 		}
 		else {
 			error(28);
-		}
+		}*/
 		++(ppro->para_num);
 		table[tx].address = -(ppro->para_num);
-		getsym();
 		prcd->para_link = (mask*)malloc(sizeof(mask));
 		if (prcd->para_link == NULL) {
 			printf("STACK OVERFLOW");
@@ -724,24 +748,25 @@ void formal_parameter_line()
 			break;
 		}
 	}
-}//formal_parameters_line
+} // formal_parameters_line
 
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys, int tx0);
 void procedure_declare(symset fsys)
 {
-	int tmp_tx = 0;
+	int savedTx = 0;
+    symset  set, set1;
 	assert(sym == SYM_PROCEDURE);
 	getsym();
 	if (sym == SYM_IDENTIFIER) {
-		enter(sym);
+		enter(ID_PROCEDURE);
 		getsym();
 	}
 	else {
 		error(4);
 	}
 	++level;
-	tmp_tx = tx;
+	savedTx = tx;
 	table[tx].address = cx;
 	if (sym == SYM_LPAREN) {
 		getsym();
@@ -753,33 +778,35 @@ void procedure_declare(symset fsys)
 			error(22);
 		}
 	}
-	if (sym = SYM_COLON) {
+	/*if (sym = SYM_COLON) {
 		getsym();
 	}
 	else {
 		error(28);
-	}
-	assert(table[tmp_tx].kind == SYM_PROCEDURE);
-	getsym();
+	}*/
+	//assert(table[savedTx].kind == SYM_PROCEDURE);
+	//getsym();
 	if (sym == SYM_SEMICOLON) {
 		getsym();
 	}
 	else {
 		error(17);
 	}
-	block(uniteset(fsys, SYM_SEMICOLON), tmp_tx);
-	free_para_link(table + tmp_tx + 1, table + tx + 1);
-	tx = tmp_tx;
+    set = createset(SYM_SEMICOLON, SYM_NULL);
+	block(uniteset(set, fsys), savedTx);
+	free_para_link(table + savedTx + 1, table + tx + 1);
+	tx = savedTx;
 	--level;
 	if (sym == SYM_SEMICOLON) {
 		getsym();
-		symset set1 = createset(statbegsys, SYM_IDENTIFIER, SYM_PROCEDURE);
-		test(statbegsys, fsys, 6);
+        set = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
+        set1 = uniteset(statbegsys, set);
+		test(set1, fsys, 6);
 	}
 	else {
 		error(5);
 	}
-}//procedure declare
+} // procedure declare
 
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys, int tx0)
@@ -787,12 +814,12 @@ void block(symset fsys, int tx0)
 	int cx0; // initial code index
 	mask* mk;
 	int block_dx;
-	int savedTx;
+	//int savedTx;
 	symset set1, set;
 
 	dx = 3;
 	block_dx = dx;
-	mk = (mask*) &table[tx];
+	mk = (mask*) &table[tx0];
 	mk->address = cx;
 	gen(JMP, 0, 0);
 	if (level > MAXLEVEL)
@@ -850,7 +877,8 @@ void block(symset fsys, int tx0)
 
 		while (sym == SYM_PROCEDURE)
 		{ // procedure declarations
-			getsym();
+			procedure_declare(fsys);
+			/*getsym();
 			if (sym == SYM_IDENTIFIER)
 			{
 				enter(ID_PROCEDURE);
@@ -893,7 +921,7 @@ void block(symset fsys, int tx0)
 			else
 			{
 				error(5); // Missing ',' or ';'.
-			}
+			}*/
 		} // while
 		set1 = createset(SYM_IDENTIFIER, SYM_NULL);
 		set = uniteset(statbegsys, set1);
@@ -916,6 +944,7 @@ void block(symset fsys, int tx0)
 	test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
 	listcode(cx0, cx);
 } // block
+
 //////////////////////////////////////////////////////////////////////
 int base(int stack[], int currentLevel, int levelDiff)
 {
@@ -935,7 +964,9 @@ void interpret()
 	int top;       // top of stack
 	int b;         // program, base, and top-stack register
 	instruction i; // instruction register
-
+	int first = 0;
+	int last = 0;
+    int tmp;
 	printf("Begin executing PL/0 program.\n");
 
 	pc = 0;
@@ -1007,6 +1038,11 @@ void interpret()
 			case OPR_LEQ:
 				top--;
 				stack[top] = stack[top] <= stack[top + 1];
+                break;
+            case OPR_CPY:
+                tmp = stack[top];
+                memcpy(&stack[top], &tmp, sizeof(int));
+                break;
 			} // switch
 			break;
 		case LOD:
@@ -1040,11 +1076,16 @@ void interpret()
 			top -= i.a;
 			break;
 	    case REVA:
-			int first = top - i.a + 1;
-			int last = t + 1;
+			first = top - i.a + 1;
+			last = top + 1;
 			if (last - first >= 2) {
-				
+				for (; first < (last--); ++first) {
+					int temp = stack[first];
+					stack[first] = stack[last];
+					stack[last] = temp;
+				}
 			}
+			break;
 		} // switch
 	}
 	while (pc);
