@@ -407,7 +407,7 @@ void factor(symset fsys)
 				error(22); // Missing ')'.
 			}
 		}
-		test(fsys, createset(SYM_LPAREN, SYM_NULL), 23);
+		test(fsys, createset(SYM_LPAREN,SYM_NULL), 23);
 	} // while
 } // factor
 
@@ -506,55 +506,103 @@ void actual_parameters_line(symset fsys, mask const *prcd)
 }// actual parameters line
 
 //////////////////////////////////////////////////////////////////////
-void condition(symset fsys)
-{
-	int relop;
-	symset set;
+void conditionFactor(symset fsys) {
+    void condition(symset fsys);
+    symset set = uniteset(fsys,createset(SYM_RPAREN, SYM_NOT));
 
-	if (sym == SYM_ODD)
-	{
+    if (sym == SYM_LPAREN) {
+        getsym();
+        condition(set);
+        if (sym == SYM_RPAREN) {
+            getsym();
+        } else {
+            error(22);
+        }
+    } else {
+        expression(set);
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////
+void conditionTerm(symset fsys) {
+    int relop;
+    symset set;
+
+    if (sym == SYM_ODD) {
+        getsym();
+        expression(fsys);
+        gen(OPR, 0, 6);
+    }
+    else {
+        set = uniteset(relset, fsys);
+        conditionFactor(set);
+        destroyset(set);
+        if (!inset(sym, relset)) {
+            return;
+        } else {
+            relop = sym;
+            getsym();
+            conditionFactor(fsys);
+            switch (relop) {
+                case SYM_EQU:
+                    gen(OPR, 0, OPR_EQU);
+                    break;
+                case SYM_NEQ:
+                    gen(OPR, 0, OPR_NEQ);
+                    break;
+                case SYM_LES:
+                    gen(OPR, 0, OPR_LES);
+                    break;
+                case SYM_GEQ:
+                    gen(OPR, 0, OPR_GEQ);
+                    break;
+                case SYM_GTR:
+                    gen(OPR, 0, OPR_GTR);
+                    break;
+                case SYM_LEQ:
+                    gen(OPR, 0, OPR_LEQ);
+                    break;
+            } // switch
+        } // else
+    } // else
+}
+
+//////////////////////////////////////////////////////////////////////
+void condition(symset fsys) {
+
+	int conditionOp;
+	symset set = uniteset(fsys, logicSet);
+    int ccx = 0;
+
+	if (sym == SYM_NOT) {
 		getsym();
-		expression(fsys);
-		gen(OPR, 0, 6);
+		conditionTerm(set);
+		gen(OPR, 0, OPR_OPP);
+	} else {
+		conditionTerm(set);
 	}
-	else
-	{
-		set = uniteset(relset, fsys);
-		expression(set);
-		destroyset(set);
-		if (! inset(sym, relset))
-		{
-			error(20);
+    if (sym == SYM_AND) {
+        scx[ccx++] = cx;
+        gen(JPF, 0, 0);
+    } else {
+        scx[ccx++] = cx;
+        gen(JPT, 0, 0);
+    }
+	while (sym == SYM_AND || sym == SYM_OR) {
+		conditionOp = sym;
+		getsym();
+		conditionTerm(set);
+		if (conditionOp == SYM_AND) {
+            scx[ccx++] = cx;
+			gen(JPF, 0, 0);
+		} else {
+            scx[ccx++] = cx;
+			gen(JPT, 0, 0);
 		}
-		else
-		{
-			relop = sym;
-			getsym();
-			expression(fsys);
-			switch (relop)
-			{
-			case SYM_EQU:
-				gen(OPR, 0, OPR_EQU);
-				break;
-			case SYM_NEQ:
-				gen(OPR, 0, OPR_NEQ);
-				break;
-			case SYM_LES:
-				gen(OPR, 0, OPR_LES);
-				break;
-			case SYM_GEQ:
-				gen(OPR, 0, OPR_GEQ);
-				break;
-			case SYM_GTR:
-				gen(OPR, 0, OPR_GTR);
-				break;
-			case SYM_LEQ:
-				gen(OPR, 0, OPR_LEQ);
-				break;
-			} // switch
-		} // else
-	} // else
-} // condition
+	}
+	destroyset(set);
+}
 
 //////////////////////////////////////////////////////////////////////
 void statement(symset fsys)
@@ -652,8 +700,15 @@ void statement(symset fsys)
 		}
 		cx1 = cx;
 		gen(JPC, 0, 0);
+        for (int j = 0; j < 100; ++j) {
+            if (scx[j] != 0) {
+                code[scx[j]].a = cx;
+            } else {
+                break;
+            }
+        }
 		statement(fsys);
-		code[cx1].a = cx;	
+		code[cx1].a = cx;
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
@@ -1043,6 +1098,9 @@ void interpret()
                 tmp = stack[top];
                 memcpy(&stack[top], &tmp, sizeof(int));
                 break;
+            case OPR_OPP:
+                stack[top] = !stack[top];
+                break;
 			} // switch
 			break;
 		case LOD:
@@ -1072,6 +1130,14 @@ void interpret()
 				pc = i.a;
 			top--;
 			break;
+        case JPF:
+            if (stack[top] == 0)
+                pc = i.a;
+            break;
+        case JPT:
+            if (stack[top] != 0)
+                pc = i.a;
+            break;
 		case POPA:
 			top -= i.a;
 			break;
@@ -1111,8 +1177,9 @@ void main ()
 
 	phi = createset(SYM_NULL);
 	relset = createset(SYM_EQU, SYM_NEQ, SYM_LES, SYM_LEQ, SYM_GTR, SYM_GEQ, SYM_NULL);
+    logicSet = createset(SYM_AND, SYM_OR);
 
-	// create begin symbol sets
+    // create begin symbol sets
 	declbegsys = createset(SYM_CONST, SYM_VAR, SYM_PROCEDURE, SYM_NULL);
 	statbegsys = createset(SYM_BEGIN, SYM_CALL, SYM_IF, SYM_WHILE, SYM_NULL);
 	facbegsys = createset(SYM_IDENTIFIER, SYM_NUMBER, SYM_LPAREN, SYM_NULL);
