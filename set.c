@@ -9,7 +9,8 @@ symset uniteset(symset s1, symset s2)
 {
 	symset s;
 	snode* p;
-	
+	s1 = s1->next;
+	s2 = s2->next;
 	s = p = (snode*) malloc(sizeof(snode));
 	while (s1 && s2)
 	{
@@ -98,13 +99,17 @@ void destroyset(symset s)
 int inset(int elem, symset s)
 {
 	s = s->next;
-	while (s && s->elem < elem)
+	while ((s != NULL) && (s->elem < elem)) {
+		//printf("%d\n", s->elem);
 		s = s->next;
+	}
 
-	if (s && s->elem == elem)
+	if ((s != NULL) && (s->elem == elem))
 		return 1;
-	else
+	else {
+		//printf("%d error!!\n", elem);
 		return 0;
+	}
 } // inset
 
 // EOF set.c

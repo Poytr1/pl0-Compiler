@@ -3,7 +3,7 @@
 #define NRW        11     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       10     // maximum number of symbols in array ssym and csym
+#define NSYM       11     // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 
 #define MAXADDRESS 32767  // maximum address
@@ -45,7 +45,8 @@ enum symtype
 	SYM_CALL,
 	SYM_CONST,
 	SYM_VAR,
-	SYM_PROCEDURE
+	SYM_PROCEDURE,
+	SYM_COLON
 };
 
 enum idtype
@@ -55,7 +56,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA, REVA
 };
 
 enum oprcode
@@ -103,9 +104,9 @@ char* err_msg[] =
 /* 23 */    "The symbol can not be followed by a factor.",
 /* 24 */    "The symbol can not be as the beginning of an expression.",
 /* 25 */    "The number is too great.",
-/* 26 */    "",
-/* 27 */    "",
-/* 28 */    "",
+/* 26 */    "There are too many actual parameters.",
+/* 27 */    "There are too few actual parameters.",
+/* 28 */    "Missing ':'.",
 /* 29 */    "",
 /* 30 */    "",
 /* 31 */    "",
@@ -145,18 +146,18 @@ int wsym[NRW + 1] =
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
-	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON
+	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON, SYM_COLON
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';'
+	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';', ':'
 };
 
-#define MAXINS   8
+#define MAXINS   10
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA"
 };
 
 typedef struct
@@ -166,16 +167,18 @@ typedef struct
 	int  value;
 } comtab;
 
-comtab table[TXMAX];
-
-typedef struct
+typedef struct mask
 {
 	char  name[MAXIDLEN + 1];
 	int   kind;
+	int   value;
 	short level;
 	short address;
+	struct mask * para_link;
+	short para_num;
 } mask;
 
+mask table[TXMAX];
 FILE* infile;
 
 // EOF PL0.h

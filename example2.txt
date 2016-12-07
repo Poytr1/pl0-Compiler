@@ -1,0 +1,9 @@
+var i; //1231
+procedure p;
+begin
+  i := 2;
+end;
+begin
+  i := 1;
+  call p;
+end.

@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <assert.h>
 
 #include "PL0.h"
 #include "set.c"
@@ -20,7 +21,29 @@ void error(int n)
 	printf("Error %3d: %s\n", n, err_msg[n]);
 	err++;
 } // error
-
+//////////////////////////////////////////////////////////////////////
+void free_para_link(mask *begin, mask *end) {
+	for (; begin != end; ++ begin) {
+		if ((begin->kind == SYM_PROCEDURE) && (begin->para_link != NULL)) {
+			mask *p = begin->para_link;
+			mask *pre = NULL;
+			assert(begin->para_num > 0);
+			while (1) {
+				if (p->para_link == NULL) {
+					free(p);
+					p = NULL;
+					break;
+				}
+				else {
+					pre = p;
+					p = p->para_link;
+					free(pre);
+					pre = NULL;
+				}
+			}
+		}
+	}
+}//free the parameter link
 //////////////////////////////////////////////////////////////////////
 void getch(void)
 {
@@ -212,7 +235,7 @@ void test(symset s1, symset s2, int n)
 {
 	symset s;
 
-	if (! inset(sym, s1))
+	if (! inset(sym,s1))
 	{
 		error(n);
 		s = uniteset(s1, s2);
@@ -348,6 +371,7 @@ void factor(symset fsys)
 					gen(LIT, 0, table[i].value);
 					break;
 				case ID_VARIABLE:
+					//printf("this is a variable");
 					mk = (mask*) &table[i];
 					gen(LOD, level - mk->level, mk->address);
 					break;
@@ -451,6 +475,32 @@ void expression(symset fsys)
 
 	destroyset(set);
 } // expression
+
+//////////////////////////////////////////////////////////////////////
+void actual_parameters_line(symset fsys, mask const *prcd)
+{
+	assert(prcd != NULL);
+	while (1) {
+		expression(uniteset(fsys, SYM_COMMA));
+		if (prcd->para_link == NULL) {
+			error(26);
+		}
+		else {
+			prcd = prcd->para_link;
+			gen(OPR, 0, 30);
+		}
+		if (sym == SYM_COMMA) {
+			getsym();
+		}
+		else {
+			if (prcd->para_link != NULL) {
+				error(27);
+			}
+			break;
+		}
+	}
+
+}// actual parameters line
 
 //////////////////////////////////////////////////////////////////////
 void condition(symset fsys)
@@ -638,9 +688,101 @@ void statement(symset fsys)
 	}
 	test(fsys, phi, 19);
 } // statement
-			
+
 //////////////////////////////////////////////////////////////////////
-void block(symset fsys)
+void formal_parameter_line() 
+{
+	mask *prcd = &table[tx];
+	mask *const ppro = prcd;
+	ppro->para_num = 0;
+	assert(prcd->para_link == NULL);
+
+	while (1) {
+		vardeclaration();
+		if (sym == SYM_COLON) {
+			getsym();
+		}
+		else {
+			error(28);
+		}
+		++(ppro->para_num);
+		table[tx].address = -(ppro->para_num);
+		getsym();
+		prcd->para_link = (mask*)malloc(sizeof(mask));
+		if (prcd->para_link == NULL) {
+			printf("STACK OVERFLOW");
+			exit(1);
+		}
+		*(prcd->para_link) = table[tx];
+		prcd = prcd->para_link;
+		assert(prcd->para_link == NULL);
+		prcd->para_link == NULL;
+		if (sym == SYM_SEMICOLON) {
+			getsym();
+		}
+		else {
+			break;
+		}
+	}
+}//formal_parameters_line
+
+//////////////////////////////////////////////////////////////////////
+void block(symset fsys, int tx0);
+void procedure_declare(symset fsys)
+{
+	int tmp_tx = 0;
+	assert(sym == SYM_PROCEDURE);
+	getsym();
+	if (sym == SYM_IDENTIFIER) {
+		enter(sym);
+		getsym();
+	}
+	else {
+		error(4);
+	}
+	++level;
+	tmp_tx = tx;
+	table[tx].address = cx;
+	if (sym == SYM_LPAREN) {
+		getsym();
+		formal_parameter_line();   //this will change tx
+		if (sym == SYM_RPAREN) {
+			getsym();
+		}
+		else {
+			error(22);
+		}
+	}
+	if (sym = SYM_COLON) {
+		getsym();
+	}
+	else {
+		error(28);
+	}
+	assert(table[tmp_tx].kind == SYM_PROCEDURE);
+	getsym();
+	if (sym == SYM_SEMICOLON) {
+		getsym();
+	}
+	else {
+		error(17);
+	}
+	block(uniteset(fsys, SYM_SEMICOLON), tmp_tx);
+	free_para_link(table + tmp_tx + 1, table + tx + 1);
+	tx = tmp_tx;
+	--level;
+	if (sym == SYM_SEMICOLON) {
+		getsym();
+		symset set1 = createset(statbegsys, SYM_IDENTIFIER, SYM_PROCEDURE);
+		test(statbegsys, fsys, 6);
+	}
+	else {
+		error(5);
+	}
+}//procedure declare
+
+//////////////////////////////////////////////////////////////////////
+void block(symset fsys, int tx0)
 {
 	int cx0; // initial code index
 	mask* mk;
@@ -733,7 +875,7 @@ void block(symset fsys)
 			savedTx = tx;
 			set1 = createset(SYM_SEMICOLON, SYM_NULL);
 			set = uniteset(set1, fsys);
-			block(set);
+			block(set, tx);
 			destroyset(set1);
 			destroyset(set);
 			tx = savedTx;
@@ -894,6 +1036,15 @@ void interpret()
 				pc = i.a;
 			top--;
 			break;
+		case POPA:
+			top -= i.a;
+			break;
+	    case REVA:
+			int first = top - i.a + 1;
+			int last = t + 1;
+			if (last - first >= 2) {
+				
+			}
 		} // switch
 	}
 	while (pc);
@@ -934,7 +1085,7 @@ void main ()
 	set1 = createset(SYM_PERIOD, SYM_NULL);
 	set2 = uniteset(declbegsys, statbegsys);
 	set = uniteset(set1, set2);
-	block(set);
+	block(set, tx);
 	destroyset(set1);
 	destroyset(set2);
 	destroyset(set);
