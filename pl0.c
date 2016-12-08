@@ -74,7 +74,6 @@ void getsym(void)
 {
 	int i, j, k;
 	char a[MAXIDLEN + 1];
-L:
 	while (ch == ' ') {
 		//printf("eatup space");
 		getch();
@@ -169,31 +168,31 @@ L:
 		}
 	}
 	else if (ch == '/') {      // to handle the notes beginning with "/*"
-		getch();
-		if (ch == '*') {
-		L1:
-			do {
-				getch();
-			} while (ch != '*');
-		L2:
-			getch();
-			if (ch == '/') {
-				getch();
-				goto L;
-			} else if (ch == '*') {
-				goto L2;
-			} else {
-				goto L1;
-			}
-		} 
-		else if (ch == '/') {    // to handle the notes beginning with "//"
-			cc = ll;
-			getch();
-			goto L;
-		}
-		else {
-			error(0);
-		}
+        getch();
+        if (ch == '*') {
+            do {
+                getch();
+            } while (ch != '*');
+            while (1) {
+                getch();
+                if (ch == '/') {
+                    getch();
+                    getsym();
+                    break;
+                } else {
+                    do {
+                        getch();
+                    } while (ch != '*');
+                }
+            }
+        } else if (ch == '/') {    // to handle the notes beginning with "//"
+                cc = ll;
+                getch();
+                getsym();
+            }
+            else {
+                error(0);
+            }
 	}
 	else
 	{ // other tokens
