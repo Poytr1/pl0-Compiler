@@ -674,11 +674,10 @@ void statement(symset fsys)
 					gen(CAL, level - mk->level, mk->address);
 				}
 			}
-			else
-			{
-				error(15); // A constant or variable can not be called. 
-			}
-			getsym();
+			else {
+                error(15); // A constant or variable can not be called.
+                getsym();
+            }
 		}
 	} 
 	else if (sym == SYM_IF)
