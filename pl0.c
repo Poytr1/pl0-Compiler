@@ -740,27 +740,39 @@ void statement(symset fsys)
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
-		cx1 = cx;
-		getsym();
-		set1 = createset(SYM_DO, SYM_NULL);
-		set = uniteset(set1, fsys);
-		condition(set);
-		destroyset(set1);
-		destroyset(set);
-		cx2 = cx;
-		gen(JPC, 0, 0);
-		if (sym == SYM_DO)
-		{
-			getsym();
-		}
-		else
-		{
-			error(18); // 'do' expected.
-		}
-		statement(fsys);
-		gen(JMP, 0, cx1);
-		code[cx2].a = cx;
-	}
+        cx1 = cx;
+        getsym();
+        set1 = createset(SYM_DO, SYM_NULL);
+        set = uniteset(set1, fsys);
+        condition(set);
+        destroyset(set1);
+        destroyset(set);
+        
+        if (sym == SYM_DO)
+        {
+            getsym();
+        }
+        else
+        {
+            error(18); // 'do' expected.
+        }
+        gen(JMP,0,0);
+        cx2 = cx;
+        statement(fsys);
+        gen(JMP, 0, cx1);
+        for (int j = 0; j < 100; ++j) {
+            if (scx[j] != 0) {
+                if (code[scx[j]].f == JPF) {
+                    code[scx[j]].a = cx;
+                } else {
+                    code[scx[j]].a = cx2;
+                }
+            } else {
+                break;
+            }
+        }
+        code[cx2-1].a = cx;
+    }
 	test(fsys, phi, 19);
 } // statement
 
