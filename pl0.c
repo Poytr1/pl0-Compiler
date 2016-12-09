@@ -682,31 +682,33 @@ void statement(symset fsys)
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
-		getsym();
-		set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
-		set = uniteset(set1, fsys);
-		condition(set);
-		destroyset(set1);
-		destroyset(set);
-		if (sym == SYM_THEN)
-		{
-			getsym();
-		}
-		else
-		{
-			error(16); // 'then' expected.
-		}
-		cx1 = cx;
-		gen(JPC, 0, 0);
+        getsym();
+        set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
+        set = uniteset(set1, fsys);
+        condition(set);
+        destroyset(set1);
+        destroyset(set);
+        if (sym == SYM_THEN)
+        {
+            getsym();
+        }
+        else
+        {
+            error(16); // 'then' expected.
+        }
+        cx2 = cx;
+        statement(fsys);
         for (int j = 0; j < 100; ++j) {
             if (scx[j] != 0) {
-                code[scx[j]].a = cx;
+                if (code[scx[j]].f == JPF) {
+                    code[scx[j]].a = cx;
+                } else {
+                    code[scx[j]].a = cx2;
+                }
             } else {
                 break;
             }
         }
-		statement(fsys);
-		code[cx1].a = cx;
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
