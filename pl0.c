@@ -606,7 +606,7 @@ void condition(symset fsys) {
 //////////////////////////////////////////////////////////////////////
 void statement(symset fsys)
 {
-	int i, cx1, cx2;
+	int i, cx1, cx2, cx3;
 	symset set1, set;
 
 	if (sym == SYM_IDENTIFIER)
