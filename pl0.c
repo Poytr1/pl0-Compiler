@@ -697,6 +697,7 @@ void statement(symset fsys)
             error(16); // 'then' expected.
         }
         cx2 = cx;
+        gen(JPC,0,0);
         statement(fsys);
         for (int j = 0; j < 100; ++j) {
             if (scx[j] != 0) {
@@ -709,6 +710,7 @@ void statement(symset fsys)
                 break;
             }
         }
+        code[cx2].a = cx;
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
@@ -748,7 +750,8 @@ void statement(symset fsys)
         condition(set);
         destroyset(set1);
         destroyset(set);
-        
+        cx3 = cx;
+        gen(JPC, 0, 0);
         if (sym == SYM_DO)
         {
             getsym();
@@ -757,10 +760,10 @@ void statement(symset fsys)
         {
             error(18); // 'do' expected.
         }
-        gen(JMP,0,0);
         cx2 = cx;
         statement(fsys);
         gen(JMP, 0, cx1);
+        code[cx3].a = cx;
         for (int j = 0; j < 100; ++j) {
             if (scx[j] != 0) {
                 if (code[scx[j]].f == JPF) {
@@ -772,9 +775,7 @@ void statement(symset fsys)
                 break;
             }
         }
-        code[cx2-1].a = cx;
     }
-	test(fsys, phi, 19);
 } // statement
 
 //////////////////////////////////////////////////////////////////////
