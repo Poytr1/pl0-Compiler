@@ -584,10 +584,13 @@ void condition(symset fsys) {
     if (sym == SYM_OR) {
         scx[ccx++] = cx;
         gen(JPT, 0, 0);
-    } else {
+    } else if (sym == SYM_AND) {
         scx[ccx++] = cx;
         gen(JPF, 0, 0);
-    }
+    } else {
+		destroyset(set);
+        return;
+	}
 	while (sym == SYM_AND || sym == SYM_OR) {
 		conditionOp = sym;
 		getsym();
