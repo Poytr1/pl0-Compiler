@@ -489,7 +489,6 @@ void actual_parameters_line(symset fsys, mask const *prcd)
 		}
 		else {
 			prcd = prcd->para_link;
-			gen(OPR, 0, OPR_CPY);
 		}
 		if (sym == SYM_COMMA) {
 			getsym();
@@ -938,7 +937,7 @@ void formal_parameter_line()
 		prcd = prcd->para_link;
 		assert(prcd->para_link == NULL);
 		prcd->para_link = NULL;
-		if (sym == SYM_SEMICOLON) {
+		if (sym == SYM_COMMA) {
 			getsym();
 		}
 		else {
@@ -975,14 +974,6 @@ void procedure_declare(symset fsys)
 			error(22);
 		}
 	}
-	/*if (sym = SYM_COLON) {
-		getsym();
-	}
-	else {
-		error(28);
-	}*/
-	//assert(table[savedTx].kind == SYM_PROCEDURE);
-	//getsym();
 	if (sym == SYM_SEMICOLON) {
 		getsym();
 	}
@@ -1075,50 +1066,6 @@ void block(symset fsys, int tx0)
 		while (sym == SYM_PROCEDURE)
 		{ // procedure declarations
 			procedure_declare(fsys);
-			/*getsym();
-			if (sym == SYM_IDENTIFIER)
-			{
-				enter(ID_PROCEDURE);
-				getsym();
-			}
-			else
-			{
-				error(4); // There must be an identifier to follow 'const', 'var', or 'procedure'.
-			}
-
-
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-			}
-			else
-			{
-				error(5); // Missing ',' or ';'.
-			}
-
-			level++;
-			savedTx = tx;
-			set1 = createset(SYM_SEMICOLON, SYM_NULL);
-			set = uniteset(set1, fsys);
-			block(set, tx);
-			destroyset(set1);
-			destroyset(set);
-			tx = savedTx;
-			level--;
-
-			if (sym == SYM_SEMICOLON)
-			{
-				getsym();
-				set1 = createset(SYM_IDENTIFIER, SYM_PROCEDURE, SYM_NULL);
-				set = uniteset(statbegsys, set1);
-				test(set, fsys, 6);
-				destroyset(set1);
-				destroyset(set);
-			}
-			else
-			{
-				error(5); // Missing ',' or ';'.
-			}*/
 		} // while
 		set1 = createset(SYM_IDENTIFIER, SYM_NULL);
 		set = uniteset(statbegsys, set1);
@@ -1244,10 +1191,6 @@ void interpret()
 			case OPR_LEQ:
 				top--;
 				stack[top] = stack[top] <= stack[top + 1];
-                break;
-            case OPR_CPY:
-                tmp = stack[top];
-                memcpy(&stack[top], &tmp, sizeof(int));
                 break;
             case OPR_OPP:
                 stack[top] = !stack[top];
