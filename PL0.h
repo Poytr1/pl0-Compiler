@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define NRW        11     // number of reserved words
+#define NRW        15     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14     // maximum number of symbols in array ssym and csym
@@ -16,40 +16,44 @@
 
 enum symtype
 {
-	SYM_NULL,
-	SYM_IDENTIFIER,
-	SYM_NUMBER,
-	SYM_PLUS,
-	SYM_MINUS,
-	SYM_TIMES,
-	SYM_SLASH,
-	SYM_ODD,
-	SYM_EQU,
-	SYM_NEQ,
-	SYM_LES,
-	SYM_LEQ,
-	SYM_GTR,
-	SYM_GEQ,
-    SYM_AND,
-    SYM_OR,
-	SYM_NOT,
-	SYM_LPAREN,
-	SYM_RPAREN,
-	SYM_COMMA,
-	SYM_SEMICOLON,
-	SYM_PERIOD,
-	SYM_BECOMES,
-    SYM_BEGIN,
-	SYM_END,
-	SYM_IF,
-	SYM_THEN,
-	SYM_WHILE,
-	SYM_DO,
-	SYM_CALL,
-	SYM_CONST,
-	SYM_VAR,
-	SYM_PROCEDURE,
-	SYM_COLON
+	SYM_NULL,//0
+	SYM_IDENTIFIER,//1
+	SYM_NUMBER,//2
+	SYM_PLUS,//3
+	SYM_MINUS,//4
+	SYM_TIMES,//5
+	SYM_SLASH,//6
+	SYM_ODD,//7
+	SYM_EQU,//8
+	SYM_NEQ,//9
+	SYM_LES,//10
+	SYM_LEQ,//11
+	SYM_GTR,//12
+	SYM_GEQ,//13
+    SYM_AND,//14
+    SYM_OR,//15
+	SYM_NOT,//16
+	SYM_LPAREN,//17
+	SYM_RPAREN,//18
+	SYM_COMMA,//19
+	SYM_SEMICOLON,//20
+	SYM_PERIOD,//21
+	SYM_BECOMES,//22
+    SYM_BEGIN,//23
+	SYM_BREAK,//24
+	SYM_ELSE,//25
+	SYM_END,//26
+	SYM_EXIT,//27
+	SYM_FOR,//28
+	SYM_IF,//29
+	SYM_THEN,//30
+	SYM_WHILE,//31
+	SYM_DO,//32
+	SYM_CALL,//33
+	SYM_CONST,//34
+	SYM_VAR,//35
+	SYM_PROCEDURE,//36
+	SYM_COLON//37
 };
 
 enum idtype
@@ -129,6 +133,11 @@ int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
 int  scx[100] = {0};       //index for short-circuit logic operation
+////////////////for break
+int loop_level;
+int break_point[5][5];
+int exit_point[5];
+/////////////////
 
 char line[80];
 
@@ -137,13 +146,13 @@ instruction code[CXMAX];
 char* word[NRW + 1] =
 {
 	"", /* place holder */
-	"begin", "call", "const", "do", "end","if",
+	"begin", "break","call", "const", "do", "else","end","exit","for","if",
 	"odd", "procedure", "then", "var", "while"
 };
 
 int wsym[NRW + 1] =
 {
-	SYM_NULL, SYM_BEGIN, SYM_CALL, SYM_CONST, SYM_DO, SYM_END,
+	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE
 };
 

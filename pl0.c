@@ -584,10 +584,11 @@ void condition(symset fsys) {
     if (sym == SYM_OR) {
         scx[ccx++] = cx;
         gen(JPT, 0, 0);
-    } else if (sym == SYM_AND) {
+    } else if(sym==SYM_AND){
         scx[ccx++] = cx;
         gen(JPF, 0, 0);
-    } else {
+    }
+	else{
 		destroyset(set);
         return;
 	}
@@ -607,9 +608,11 @@ void condition(symset fsys) {
 }
 
 //////////////////////////////////////////////////////////////////////
+
+
 void statement(symset fsys)
 {
-	int i, cx1, cx2, cx3;
+	int i, cx1, cx2;
 	symset set1, set;
 
 	if (sym == SYM_IDENTIFIER)
@@ -685,8 +688,9 @@ void statement(symset fsys)
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
+		int sym1,cc1,cx3;//for else
         getsym();
-        set1 = createset(SYM_THEN, SYM_DO, SYM_NULL);
+        set1 = createset(SYM_THEN, SYM_ELSE,SYM_DO, SYM_NULL);
         set = uniteset(set1, fsys);
         condition(set);
         destroyset(set1);
@@ -702,6 +706,8 @@ void statement(symset fsys)
         cx2 = cx;
         gen(JPC,0,0);
         statement(fsys);
+		cx3=cx;
+		gen(JMP,0,0);
         for (int j = 0; j < 100; ++j) {
             if (scx[j] != 0) {
                 if (code[scx[j]].f == JPF) {
@@ -713,10 +719,25 @@ void statement(symset fsys)
                 break;
             }
         }
-        code[cx2].a = cx;
+		//////////////else
+		getsym();
+		if (sym==SYM_ELSE)
+		{
+			getsym();
+			statement(fsys);
+			code[cx3].a=cx;
+		}
+		else
+		{	
+			code[cx3].a=cx;
+			statement(fsys);
+		}
+
+        code[cx2].a = code[cx3].a;
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
+		int i;//for loop
 		getsym();
 		set1 = createset(SYM_SEMICOLON, SYM_END, SYM_NULL);
 		set = uniteset(set1, fsys);
@@ -737,7 +758,7 @@ void statement(symset fsys)
 		destroyset(set);
 		if (sym == SYM_END)
 		{
-			getsym();
+			getsym();			
 		}
 		else
 		{
@@ -746,9 +767,11 @@ void statement(symset fsys)
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
+		int cx3,i,cx4;
+		loop_level++;
         cx1 = cx;
         getsym();
-        set1 = createset(SYM_DO, SYM_NULL);
+        set1 = createset(SYM_DO,SYM_BREAK,SYM_NULL);
         set = uniteset(set1, fsys);
         condition(set);
         destroyset(set1);
@@ -766,6 +789,16 @@ void statement(symset fsys)
         cx2 = cx;
         statement(fsys);
         gen(JMP, 0, cx1);
+		////////////////////////for while
+		i=0;
+		while(break_point[loop_level][i]!=-1&&i<20)//most 20  break 
+		{
+			code[break_point[loop_level][i]].a=cx;
+			break_point[loop_level][i]=-1;
+			i++;
+		}
+		loop_level--;
+		////////////////////////////////
         code[cx3].a = cx;
         for (int j = 0; j < 100; ++j) {
             if (scx[j] != 0) {
@@ -779,9 +812,101 @@ void statement(symset fsys)
             }
         }
     }
-    test(fsys,phi,19);
+	else if(sym==SYM_FOR)
+	{
+		int i,cx3,cx4;
+		loop_level++;
+		getsym();
+		if(sym==SYM_LPAREN)
+		{
+			getsym();
+		}
+		statement(fsys);//initialize
+		cx1=cx;//condition
+		getsym();
+		set1 = createset(SYM_BREAK,SYM_NULL,SYM_SEMICOLON);
+        set = uniteset(set1, fsys);
+        condition(set);
+        destroyset(set1);
+        destroyset(set);
+        cx2 = cx;//get out
+        gen(JPC, 0, 0);
+		cx3 = cx;//skip loop step
+		gen(JMP,0,0);
+		getsym();
+		statement(fsys);
+		getsym();//get ')'
+		//printf("\n\n\n\n%d\n\n\n\n",sym);
+		gen(JMP,0,cx1);
+		code[cx3].a=cx;
+		getsym();
+		statement(fsys);
+		gen(JMP,0,cx3+1);
+		code[cx2].a=cx;
+		//////////////for break
+		i=0;
+		while(break_point[loop_level][i]!=-1&&i<20)//most 20  break 
+		{
+			code[break_point[loop_level][i]].a=cx;
+			break_point[loop_level][i]=-1;
+			i++;
+		}
+		loop_level--;
+		/////////////for break
+		for (int j = 0; j < 100; ++j) {
+            if (scx[j] != 0) {
+                if (code[scx[j]].f == JPF) {
+                    code[scx[j]].a = cx;
+                } else {
+                    code[scx[j]].a = cx3;
+                }
+            } else {
+                break;
+            }
+        }
+		loop_level--;
+
+
+		
+	}
+	else if(sym==SYM_BREAK)
+	{
+		int i =0;
+		cx1=cx;
+		gen(JMP,0,0);
+		while(break_point[loop_level][i]!=-1)
+		{
+			i++;
+		}
+		break_point[loop_level][i]=cx1;
+		getsym();		//get ;
+	}
+	else if(sym==SYM_EXIT)
+	{
+		int i=0;
+		cx1=cx;
+		gen(JMP,0,0);
+		while(exit_point[i]!=-1)
+		{
+			i++;
+		}
+		exit_point[i]=cx1;
+		getsym();
+	}
 } // statement
 
+///////////////////////////////////////////////////////////////////////
+void control_initialze(void)
+{
+	int i,j;
+	loop_level=0;
+	for(i=0;i!=5;i++)
+	{
+		exit_point[i]=-1;
+		for(j=0;j!=5;j++)
+			break_point[i][j]=-1;
+	}
+}
 //////////////////////////////////////////////////////////////////////
 void formal_parameter_line() 
 {
@@ -812,7 +937,7 @@ void formal_parameter_line()
 		*(prcd->para_link) = table[tx];
 		prcd = prcd->para_link;
 		assert(prcd->para_link == NULL);
-		prcd->para_link == NULL;
+		prcd->para_link = NULL;
 		if (sym == SYM_SEMICOLON) {
 			getsym();
 		}
@@ -883,7 +1008,7 @@ void procedure_declare(symset fsys)
 //////////////////////////////////////////////////////////////////////
 void block(symset fsys, int tx0)
 {
-	int cx0; // initial code index
+	int cx0,cx1,i; // initial code index
 	mask* mk;
 	int block_dx;
 	//int savedTx;
@@ -1012,7 +1137,16 @@ void block(symset fsys, int tx0)
 	statement(set);
 	destroyset(set1);
 	destroyset(set);
+	cx1=cx;
 	gen(OPR, 0, OPR_RET); // return
+	/////////////////////for exit
+	i=0;
+	while(exit_point[i]!=-1)
+	{
+			exit_point[i]=cx1;
+			i++;
+	}
+	//////////////////////
 	test(fsys, phi, 8); // test for error: Follow the statement is an incorrect symbol.
 	listcode(cx0, cx);
 } // block
@@ -1176,8 +1310,10 @@ void interpret()
 	printf("End executing PL/0 program.\n");
 } // interpret
 
+
+
 //////////////////////////////////////////////////////////////////////
-void main ()
+int main ()
 {
 	FILE* hbin;
 	char s[80];
@@ -1191,7 +1327,9 @@ void main ()
 		printf("File %s can't be opened.\n", s);
 		exit(1);
 	}
-
+	/////////////////for break
+	control_initialze();
+	/////////////
 	phi = createset(SYM_NULL);
 	relset = createset(SYM_EQU, SYM_NEQ, SYM_LES, SYM_LEQ, SYM_GTR, SYM_GEQ, SYM_NULL);
     logicSet = createset(SYM_AND, SYM_OR);
