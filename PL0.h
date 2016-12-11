@@ -3,7 +3,7 @@
 #define NRW        11     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
-#define NSYM       14     // maximum number of symbols in array ssym and csym
+#define NSYM       10     // maximum number of symbols in array ssym and csym
 #define MAXIDLEN   10     // length of identifiers
 
 #define MAXADDRESS 32767  // maximum address
@@ -30,9 +30,6 @@ enum symtype
 	SYM_LEQ,
 	SYM_GTR,
 	SYM_GEQ,
-    SYM_AND,
-    SYM_OR,
-	SYM_NOT,
 	SYM_LPAREN,
 	SYM_RPAREN,
 	SYM_COMMA,
@@ -48,8 +45,7 @@ enum symtype
 	SYM_CALL,
 	SYM_CONST,
 	SYM_VAR,
-	SYM_PROCEDURE,
-	SYM_COLON
+	SYM_PROCEDURE
 };
 
 enum idtype
@@ -59,7 +55,7 @@ enum idtype
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA, REVA, JPF, JPT
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC
 };
 
 enum oprcode
@@ -67,7 +63,7 @@ enum oprcode
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
-	OPR_GEQ, OPR_CPY, OPR_OPP
+	OPR_GEQ
 };
 
 
@@ -107,10 +103,10 @@ char* err_msg[] =
 /* 23 */    "The symbol can not be followed by a factor.",
 /* 24 */    "The symbol can not be as the beginning of an expression.",
 /* 25 */    "The number is too great.",
-/* 26 */    "There are too many actual parameters.",
-/* 27 */    "There are too few actual parameters.",
-/* 28 */    "Missing ':'.",
-/* 29 */    "vardeclaration expected",
+/* 26 */    "",
+/* 27 */    "",
+/* 28 */    "",
+/* 29 */    "",
 /* 30 */    "",
 /* 31 */    "",
 /* 32 */    "There are too many levels."
@@ -128,7 +124,6 @@ int  err;
 int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
-int  scx[100] = {0};       //index for short-circuit logic operation
 
 char line[80];
 
@@ -150,19 +145,18 @@ int wsym[NRW + 1] =
 int ssym[NSYM + 1] =
 {
 	SYM_NULL, SYM_PLUS, SYM_MINUS, SYM_TIMES, SYM_SLASH,
-	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD,
-    SYM_SEMICOLON, SYM_COLON, SYM_AND, SYM_OR, SYM_NOT
+	SYM_LPAREN, SYM_RPAREN, SYM_EQU, SYM_COMMA, SYM_PERIOD, SYM_SEMICOLON
 };
 
 char csym[NSYM + 1] =
 {
-	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';', ':', '&', '|', '!'
+	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';'
 };
 
-#define MAXINS   12
+#define MAXINS   8
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA", "JPF", "JPT"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC"
 };
 
 typedef struct
@@ -172,18 +166,16 @@ typedef struct
 	int  value;
 } comtab;
 
-typedef struct mask
+comtab table[TXMAX];
+
+typedef struct
 {
 	char  name[MAXIDLEN + 1];
 	int   kind;
-	int   value;
 	short level;
 	short address;
-	struct mask * para_link;
-	short para_num;
 } mask;
 
-mask table[TXMAX];
 FILE* infile;
 
 // EOF PL0.h
