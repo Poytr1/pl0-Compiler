@@ -9,14 +9,9 @@ symset uniteset(symset s1, symset s2)
 {
 	symset s;
 	snode* p;
-	
+	s1 = s1->next;
+	s2 = s2->next;
 	s = p = (snode*) malloc(sizeof(snode));
-	
-	s1 = s1 -> next;
-	s2 = s2 -> next;
-	
-	/* skip head node of s1 and s2 */
-	
 	while (s1 && s2)
 	{
 		p->next = (snode*) malloc(sizeof(snode));
@@ -77,7 +72,6 @@ symset createset(int elem, .../* SYM_NULL */)
 	symset s;
 
 	s = (snode*) malloc(sizeof(snode));
-	s->elem = -1;
 	s->next = NULL;
 
 	va_start(list, elem);
@@ -97,9 +91,7 @@ void destroyset(symset s)
 	while (s)
 	{
 		p = s;
-		p->elem = -1000000; // added by alex, 2015-12-25
 		s = s->next;
-		p->next = NULL;
 		free(p);
 	}
 } // destroyset
@@ -107,13 +99,17 @@ void destroyset(symset s)
 int inset(int elem, symset s)
 {
 	s = s->next;
-	while (s && s->elem < elem)   // modified by alex, 2015-12-25,  s->elem < elem
+	while ((s != NULL) && (s->elem < elem)) {
+		//printf("%d\n", s->elem);
 		s = s->next;
+	}
 
-	if (s && s->elem == elem)
+	if ((s != NULL) && (s->elem == elem))
 		return 1;
-	else
+	else {
+		//printf("%d error!!\n", elem);
 		return 0;
+	}
 } // inset
 
 // EOF set.c
