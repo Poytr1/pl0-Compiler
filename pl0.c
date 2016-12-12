@@ -688,7 +688,7 @@ void statement(symset fsys)
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
-		int sym1,cc1,cx3;//for else
+		int sym1,cc1,cx3,cx4;//for else
         getsym();
         set1 = createset(SYM_THEN, SYM_ELSE,SYM_DO, SYM_NULL);
         set = uniteset(set1, fsys);
@@ -724,16 +724,16 @@ void statement(symset fsys)
 		if (sym==SYM_ELSE)
 		{
 			getsym();
+			code[cx2].a=cx;
 			statement(fsys);
 			code[cx3].a=cx;
+
 		}
 		else
 		{	
 			code[cx3].a=cx;
 			statement(fsys);
 		}
-
-        code[cx2].a = code[cx3].a;
 	}
 	else if (sym == SYM_BEGIN)
 	{ // block
