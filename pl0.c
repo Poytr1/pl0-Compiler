@@ -6,7 +6,6 @@
 #include <ctype.h>
 #include <assert.h>
 #include <stdbool.h>
-#include <printf.h>
 
 #include "PL0.h"
 #include "set.c"
@@ -25,7 +24,8 @@ void error(int n)
 } // error
 
 //////////////////////////////////////////////////////////////////////
-void free_para_link(mask *begin, mask *end) {
+void free_para_link(mask *begin, mask *end)
+{
 	for (; begin != end; ++ begin) {
 		if ((begin->kind == SYM_PROCEDURE) && (begin->para_link != NULL)) {
 			mask *p = begin->para_link;
@@ -264,6 +264,7 @@ void test(symset s1, symset s2, int n)
 int dx;  // data allocation index
 bool isArray = false;
 
+//////////////////////////////////////////////////////////////////////
 // enter object(constant, variable or procedre) into table.
 void enter(int kind)
 {
@@ -294,6 +295,7 @@ void enter(int kind)
 	} // switch
 } // enter
 
+//////////////////////////////////////////////////////////////////////
 void enter_array()
 {
 	int i;
@@ -304,7 +306,8 @@ void enter_array()
 	table_arr[ax].first_adr = tx;
 	for(i = table_arr[ax].sum -1 ; i >0; i--)
 		enter(ID_VARIABLE);
-}
+} // enter_array
+
 //////////////////////////////////////////////////////////////////////
 // locates identifier in symbol table.
 int position(char* id)
@@ -316,6 +319,7 @@ int position(char* id)
 	return i;
 } // position
 
+//////////////////////////////////////////////////////////////////////
 int array_position()
 {
 	int i = 0;
@@ -324,7 +328,7 @@ int array_position()
 		return i;
 	else
 		return 0;
-}
+} // array_position
 
 //////////////////////////////////////////////////////////////////////
 void constdeclaration(void)
@@ -618,7 +622,7 @@ void conditionFactor(symset fsys,int * start,int * end, bool * inParen)
     } else {
         expression(set);
     }
-}
+} // conditionFactor
 
 //////////////////////////////////////////////////////////////////////
 void conditionTerm(symset fsys,int * start,int * end,bool * inParen)
@@ -729,7 +733,7 @@ void conditionTerm(symset fsys,int * start,int * end,bool * inParen)
 //            } // switch
 //        } // else
     } // else
-}
+} //conditionTerm
 
 //////////////////////////////////////////////////////////////////////
 void condition(symset fsys,int * start,int * end,bool * inParen)
@@ -864,7 +868,7 @@ void condition(symset fsys,int * start,int * end,bool * inParen)
         ccx++;
     }
 	destroyset(set);
-}
+} //condition
 
 //////////////////////////////////////////////////////////////////////
 void statement(symset fsys)
