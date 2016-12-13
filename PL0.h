@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define NRW        15     // number of reserved words
+#define NRW        17     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14     // maximum number of symbols in array ssym and csym
@@ -9,6 +9,9 @@
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
+
+#define MAXDIM     5
+#define AXMAX      10
 
 #define MAXSYM     30     // maximum number of symbols  
 
@@ -53,17 +56,22 @@ enum symtype
 	SYM_CONST,//34
 	SYM_VAR,//35
 	SYM_PROCEDURE,//36
-	SYM_COLON//37
+	SYM_COLON,//37
+	SYM_ARRAY,//38
+	SYM_RMATCH,//39
+	SYM_WRITE,//40
+	SYM_READ //41
 };
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE, ID_ARRAY
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA, REVA, JPF, JPT
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA,
+	REVA, JPF, JPT, LODA, STOA, WRITE,WRITEA, READ, READA
 };
 
 enum oprcode
@@ -132,6 +140,7 @@ int  err;
 int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
+int  ax = 0;
 int  scx[100] = {0};       //index for short-circuit logic operation
 ////////////////for break
 int loop_level;
@@ -147,13 +156,13 @@ char* word[NRW + 1] =
 {
 	"", /* place holder */
 	"begin", "break","call", "const", "do", "else","end","exit","for","if",
-	"odd", "procedure", "then", "var", "while"
+	"odd", "procedure","read", "then", "var", "while","write"
 };
 
 int wsym[NRW + 1] =
 {
 	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
-	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE
+	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_READ, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE
 };
 
 int ssym[NSYM + 1] =
@@ -168,10 +177,11 @@ char csym[NSYM + 1] =
 	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';', ':', '&', '|', '!'
 };
 
-#define MAXINS   12
+#define MAXINS   18
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA", "JPF", "JPT"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA",
+	"JPF", "JPT", "LODA", "STOA", "WRITE", "WRITEA","READ","READ"
 };
 
 typedef struct
@@ -191,6 +201,18 @@ typedef struct mask
 	struct mask * para_link;
 	short para_num;
 } mask;
+
+typedef struct
+{
+	char name[MAXIDLEN + 1];
+	int n_dim;
+	int sum;
+	int dim[MAXDIM];
+	int size[MAXDIM];
+	int first_adr;
+} arr;
+
+arr array_temp,table_arr[AXMAX];
 
 mask table[TXMAX];
 FILE* infile;
