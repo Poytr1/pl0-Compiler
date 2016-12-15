@@ -1091,8 +1091,10 @@ void statement(symset fsys)
         {
             error(16); // 'then' expected.
         }
+
         cx4 = cx;
         statement(fsys);
+//        code[cx2-1].a = cx;
 		cx3=cx;
 		gen(JMP,0,0);
 		//////////////else
@@ -1173,6 +1175,7 @@ void statement(symset fsys)
 	else if (sym == SYM_WHILE)
 	{ // while statement
 		int cx3,i,cx4,cx0;
+
         int start = ccx;
         int end = ccx;
         bool inParen = false;

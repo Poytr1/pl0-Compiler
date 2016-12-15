@@ -1,6 +1,8 @@
 #include <stdio.h>
 
+
 #define NRW        18     // number of reserved words
+
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14     // maximum number of symbols in array ssym and csym
@@ -62,6 +64,7 @@ enum symtype
 	SYM_WRITE,//40
 	SYM_READ, //41
 	SYM_CONTINUE//42
+
 };
 
 enum idtype
@@ -164,12 +167,15 @@ instruction code[CXMAX];
 char* word[NRW + 1] =
 {
 	"", /* place holder */
+
 	"begin", "break","call", "const","continue", "do", "else","end","exit","for","if",
+
 	"odd", "procedure","read", "then", "var", "while","write"
 };
 
 int wsym[NRW + 1] =
 {
+
 	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST,SYM_CONTINUE, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_READ, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE
 };
