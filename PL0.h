@@ -1,6 +1,6 @@
 #include <stdio.h>
 
-#define NRW        15     // number of reserved words
+#define NRW        18     // number of reserved words
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14     // maximum number of symbols in array ssym and csym
@@ -9,6 +9,9 @@
 #define MAXADDRESS 32767  // maximum address
 #define MAXLEVEL   32     // maximum depth of nesting block
 #define CXMAX      500    // size of code array
+
+#define MAXDIM     5
+#define AXMAX      10
 
 #define MAXSYM     30     // maximum number of symbols  
 
@@ -53,17 +56,23 @@ enum symtype
 	SYM_CONST,//34
 	SYM_VAR,//35
 	SYM_PROCEDURE,//36
-	SYM_COLON//37
+	SYM_COLON,//37
+	SYM_ARRAY,//38
+	SYM_RMATCH,//39
+	SYM_WRITE,//40
+	SYM_READ, //41
+	SYM_CONTINUE//42
 };
 
 enum idtype
 {
-	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE
+	ID_CONSTANT, ID_VARIABLE, ID_PROCEDURE, ID_ARRAY
 };
 
 enum opcode
 {
-	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA, REVA, JPF, JPT
+	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA,
+	REVA, JPF, JPT, JEQ, JNE, JL, JLE, JG, JGE, LODA, STOA, WRITE,WRITEA, READ, READA
 };
 
 enum oprcode
@@ -71,7 +80,8 @@ enum oprcode
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
-	OPR_GEQ, OPR_CPY, OPR_OPP
+	OPR_GEQ, OPR_CPY, OPR_OPP, OPR_AND,
+    OPR_OR
 };
 
 
@@ -132,28 +142,36 @@ int  err;
 int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
+int  ax = 0;
 int  scx[100] = {0};       //index for short-circuit logic operation
+int  andOr[100] = {-1};             //0 stand for and,1 stand for or
+int  ccx = 0;
+int  m = 0;
 ////////////////for break
 int loop_level;
-int break_point[5][5];
-int exit_point[5];
+int loop_begin[20];
+struct break_link_list{
+	int break_point;
+	struct break_link_list *next;
+};
+struct break_link_list *breaks[20];
+int exit_point[20];
 /////////////////
 
 char line[80];
 
 instruction code[CXMAX];
-
 char* word[NRW + 1] =
 {
 	"", /* place holder */
-	"begin", "break","call", "const", "do", "else","end","exit","for","if",
-	"odd", "procedure", "then", "var", "while"
+	"begin", "break","call", "const","continue", "do", "else","end","exit","for","if",
+	"odd", "procedure","read", "then", "var", "while","write"
 };
 
 int wsym[NRW + 1] =
 {
-	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
-	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_THEN, SYM_VAR, SYM_WHILE
+	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST,SYM_CONTINUE, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
+	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_READ, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE
 };
 
 int ssym[NSYM + 1] =
@@ -168,10 +186,11 @@ char csym[NSYM + 1] =
 	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';', ':', '&', '|', '!'
 };
 
-#define MAXINS   12
+#define MAXINS   23
 char* mnemonic[MAXINS] =
 {
-	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA", "JPF", "JPT"
+	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA",
+	"JPF", "JPT", "JEQ", "JNE", "JL", "JLE", "JG", "JGE", "LODA", "STOA", "WRITE", "WRITEA","READ"
 };
 
 typedef struct
@@ -191,6 +210,18 @@ typedef struct mask
 	struct mask * para_link;
 	short para_num;
 } mask;
+
+typedef struct
+{
+	char name[MAXIDLEN + 1];
+	int n_dim;
+	int sum;
+	int dim[MAXDIM];
+	int size[MAXDIM];
+	int first_adr;
+} arr;
+
+arr array_temp,table_arr[AXMAX];
 
 mask table[TXMAX];
 FILE* infile;
