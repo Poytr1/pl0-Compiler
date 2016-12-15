@@ -1091,39 +1091,53 @@ void statement(symset fsys)
         {
             error(16); // 'then' expected.
         }
-//        gen(JMP,0,0);
-        cx2 = cx;
+
+        cx4 = cx;
         statement(fsys);
 //        code[cx2-1].a = cx;
 		cx3=cx;
 		gen(JMP,0,0);
-        for (int m = start; m < end; ++m) {
-            if (scx[m] != 0) {
-                if (andOr[m] == 3) {
-                    code[scx[m]].a = cx;
-                } else {
-                    if (m == end - 1) {
-                        code[scx[m]].a = cx;
-                    } else {
-                        code[scx[m]].a = cx2;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
 		//////////////else
 		getsym();
 		if (sym==SYM_ELSE)
 		{
+			for (int m = start; m < end; ++m) {
+            	if (scx[m] != 0) {
+                	if (andOr[m] == 3) {
+                  	  code[scx[m]].a = cx;
+                	} else {
+                    	if (m == end - 1) {
+                       		code[scx[m]].a = cx;
+                    	} else {
+                        	code[scx[m]].a = cx4;
+                    	}
+                	}
+            	} else {
+                	break;
+            	}
+			}
 			getsym();
-			code[cx2].a=cx;
 			statement(fsys);
 			code[cx3].a=cx;
 
 		}
 		else
 		{	
+			for (int m = start; m < end; ++m) {
+            	if (scx[m] != 0) {
+                	if (andOr[m] == 3) {
+                    	code[scx[m]].a = cx;
+                	} else {
+                    	if (m == end - 1) {
+                        	code[scx[m]].a = cx;
+                    	} else {
+                        	code[scx[m]].a = cx4;
+                    	}
+                	}
+            	} else {
+                	break;
+            	}
+			}
 			code[cx3].a=cx;
 			statement(fsys);
 		}
@@ -1160,20 +1174,21 @@ void statement(symset fsys)
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
-		int cx3,i,cx4;
+		int cx3,i,cx4,cx0;
+
         int start = ccx;
         int end = ccx;
         bool inParen = false;
 		loop_level++;
-        cx1 = cx;
+        cx0 = cx;
+		loop_begin[loop_level]=cx;
         getsym();
-        set1 = createset(SYM_DO,SYM_BREAK,SYM_NULL);
+        set1 = createset(SYM_DO,SYM_BREAK,SYM_NULL,SYM_CONTINUE);
         set = uniteset(set1, fsys);
         condition(set,&start,&end,&inParen);
         destroyset(set1);
         destroyset(set);
         cx3 = cx;
-//        gen(JMP, 0, 0);
         if (sym == SYM_DO)
         {
             getsym();
@@ -1182,21 +1197,24 @@ void statement(symset fsys)
         {
             error(18); // 'do' expected.
         }
-        cx2 = cx;
+        cx4 = cx;
         statement(fsys);
-        gen(JMP, 0, cx1);
-//        code[cx3].a = cx;
+        gen(JMP, 0, cx0);
 		////////////////////////for while
-		i=0;
-		while(break_point[loop_level][i]!=-1&&i<20)//most 20  break 
+		struct break_link_list *head;
+		head=breaks[loop_level];
+		if(head->next!=NULL)
 		{
-			code[break_point[loop_level][i]].a=cx;
-			break_point[loop_level][i]=-1;
-			i++;
+			head=head->next;
+			do{
+				code[head->break_point].a=cx;
+				head=head->next;
+			}
+			while(head!=NULL);
 		}
 		loop_level--;
+		loop_begin[loop_level]=-1;
 		////////////////////////////////
-//        code[cx3].a = cx;
         for (int m = start; m < end; ++m) {
             if (scx[m] != 0) {
                 if (andOr[m] == 3) {
@@ -1205,7 +1223,7 @@ void statement(symset fsys)
                     if (m == end-1) {
                         code[scx[m]].a = cx;
                     } else {
-                        code[scx[m]].a = cx2;
+                        code[scx[m]].a = cx4;
                     }
                 }
             } else {
@@ -1215,7 +1233,7 @@ void statement(symset fsys)
     }
 	else if(sym==SYM_FOR)
 	{
-		int i,cx3,cx4;
+		int i,cx3,cx4,cx0;
         int start = ccx;
         int end = ccx;
         bool inParen = false;
@@ -1226,63 +1244,74 @@ void statement(symset fsys)
 			getsym();
 		}
 		statement(fsys);//initialize
-		cx1=cx;//condition
+		cx0=cx;//condition
+		loop_begin[loop_level]=cx;
 		getsym();
-		set1 = createset(SYM_BREAK,SYM_NULL,SYM_SEMICOLON);
+		set1 = createset(SYM_BREAK,SYM_NULL,SYM_SEMICOLON,SYM_CONTINUE);
         set = uniteset(set1, fsys);
         condition(set,&start,&end,&inParen);
         destroyset(set1);
         destroyset(set);
-        cx2 = cx;//get out
-        gen(JPC, 0, 0);
 		cx3 = cx;//skip loop step
 		gen(JMP,0,0);
 		getsym();
 		statement(fsys);
 		getsym();//get ')'
-		//printf("\n\n\n\n%d\n\n\n\n",sym);
-		gen(JMP,0,cx1);
+		gen(JMP,0,cx0);
 		code[cx3].a=cx;
 		getsym();
 		statement(fsys);
 		gen(JMP,0,cx3+1);
-		code[cx2].a=cx;
 		//////////////for break
-		i=0;
-		while(break_point[loop_level][i]!=-1&&i<20)//most 20  break 
+		struct break_link_list *head;
+		head=breaks[loop_level];
+		if(head->next!=NULL)
 		{
-			code[break_point[loop_level][i]].a=cx;
-			break_point[loop_level][i]=-1;
-			i++;
+			head=head->next;
+			do{
+				code[head->break_point].a=cx;
+				head=head->next;
+			}
+			while(head!=NULL);
 		}
-		loop_level--;
-		/////////////for break
-		for (int j = 0; j < 100; ++j) {
-            if (scx[j] != 0) {
-                if (code[scx[j]].f == JPF) {
-                    code[scx[j]].a = cx;
+		/////////////
+		for (int m = start; m < end; ++m) {
+            if (scx[m] != 0) {
+                if (andOr[m] == 3) {
+                    code[scx[m]].a = cx;
                 } else {
-                    code[scx[j]].a = cx3;
+                    if (m == end-1) {
+                        code[scx[m]].a = cx;
+                    } else {
+                        code[scx[m]].a = cx3;
+                    }
                 }
             } else {
                 break;
             }
         }
 		loop_level--;
-
-
-		
+		loop_begin[loop_level]=-1;
+	}
+	else if(sym==SYM_CONTINUE)
+	{
+		gen(JMP,0,loop_begin[loop_level]);
+		getsym();
 	}
 	else if(sym==SYM_BREAK)
 	{
-		int i =0;
+		struct break_link_list *head,*new;
+		head=breaks[loop_level];
 		cx1=cx;
 		gen(JMP,0,0);
-		while(break_point[loop_level][i]!=-1)
+		while(head->next!=NULL)
 		{
-			i++;
+			head=head->next;
 		}
-		break_point[loop_level][i]=cx1;
+		new=(struct break_link_list*)malloc(sizeof(struct break_link_list));
+		new->break_point=cx1;
+		new->next=NULL;
+		head->next=new;
 		getsym();		//get ;
 	}
 	else if(sym==SYM_EXIT)
@@ -1304,11 +1333,13 @@ void control_initialize(void)
 {
 	int i,j;
 	loop_level=0;
-	for(i=0;i!=5;i++)
+	for(i=0;i!=20;i++)
 	{
+		breaks[i]=(struct break_link_list*)malloc(sizeof(struct break_link_list));
+		breaks[i]->break_point=-1;
+		breaks[i]->next=NULL;
 		exit_point[i]=-1;
-		for(j=0;j!=5;j++)
-			break_point[i][j]=-1;
+		loop_begin[i]=-1;
 	}
 } // control_initialize
 

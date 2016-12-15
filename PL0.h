@@ -1,6 +1,8 @@
 #include <stdio.h>
 
-#define NRW        17     // number of reserved words
+
+#define NRW        18     // number of reserved words
+
 #define TXMAX      500    // length of identifier table
 #define MAXNUMLEN  14     // maximum number of digits in numbers
 #define NSYM       14     // maximum number of symbols in array ssym and csym
@@ -60,7 +62,9 @@ enum symtype
 	SYM_ARRAY,//38
 	SYM_RMATCH,//39
 	SYM_WRITE,//40
-	SYM_READ //41
+	SYM_READ, //41
+	SYM_CONTINUE//42
+
 };
 
 enum idtype
@@ -148,24 +152,31 @@ int  ccx = 0;
 int  m = 0;
 ////////////////for break
 int loop_level;
-int break_point[5][5];
-int exit_point[5];
+int loop_begin[20];
+struct break_link_list{
+	int break_point;
+	struct break_link_list *next;
+};
+struct break_link_list *breaks[20];
+int exit_point[20];
 /////////////////
 
 char line[80];
 
 instruction code[CXMAX];
-
 char* word[NRW + 1] =
 {
 	"", /* place holder */
-	"begin", "break","call", "const", "do", "else","end","exit","for","if",
+
+	"begin", "break","call", "const","continue", "do", "else","end","exit","for","if",
+
 	"odd", "procedure","read", "then", "var", "while","write"
 };
 
 int wsym[NRW + 1] =
 {
-	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
+
+	SYM_NULL, SYM_BEGIN,SYM_BREAK, SYM_CALL, SYM_CONST,SYM_CONTINUE, SYM_DO,SYM_ELSE, SYM_END,SYM_EXIT,SYM_FOR,
 	SYM_IF, SYM_ODD, SYM_PROCEDURE, SYM_READ, SYM_THEN, SYM_VAR, SYM_WHILE, SYM_WRITE
 };
 
@@ -185,7 +196,7 @@ char csym[NSYM + 1] =
 char* mnemonic[MAXINS] =
 {
 	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA",
-	"JPF", "JPT", "JEQ", "JNE", "JL", "JLE", "JG", "JGE", "LODA", "STOA", "WRITE", "WRITEA","READ","READ"
+	"JPF", "JPT", "JEQ", "JNE", "JL", "JLE", "JG", "JGE", "LODA", "STOA", "WRITE", "WRITEA","READ"
 };
 
 typedef struct
