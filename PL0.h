@@ -71,7 +71,7 @@ enum idtype
 enum opcode
 {
 	LIT, OPR, LOD, STO, CAL, INT, JMP, JPC, POPA,
-	REVA, JPF, JPT, LODA, STOA, WRITE,WRITEA, READ, READA
+	REVA, JPF, JPT, JEQ, JNE, JL, JLE, JG, JGE, LODA, STOA, WRITE,WRITEA, READ, READA
 };
 
 enum oprcode
@@ -79,7 +79,8 @@ enum oprcode
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
 	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
 	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
-	OPR_GEQ, OPR_CPY, OPR_OPP
+	OPR_GEQ, OPR_CPY, OPR_OPP, OPR_AND,
+    OPR_OR
 };
 
 
@@ -142,6 +143,9 @@ int  level = 0;
 int  tx = 0;
 int  ax = 0;
 int  scx[100] = {0};       //index for short-circuit logic operation
+int  andOr[100] = {-1};             //0 stand for and,1 stand for or
+int  ccx = 0;
+int  m = 0;
 ////////////////for break
 int loop_level;
 int break_point[5][5];
@@ -177,11 +181,11 @@ char csym[NSYM + 1] =
 	' ', '+', '-', '*', '/', '(', ')', '=', ',', '.', ';', ':', '&', '|', '!'
 };
 
-#define MAXINS   18
+#define MAXINS   23
 char* mnemonic[MAXINS] =
 {
 	"LIT", "OPR", "LOD", "STO", "CAL", "INT", "JMP", "JPC", "POPA", "REVA",
-	"JPF", "JPT", "LODA", "STOA", "WRITE", "WRITEA","READ","READ"
+	"JPF", "JPT", "JEQ", "JNE", "JL", "JLE", "JG", "JGE", "LODA", "STOA", "WRITE", "WRITEA","READ","READ"
 };
 
 typedef struct
