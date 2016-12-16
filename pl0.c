@@ -563,7 +563,7 @@ void expression(symset fsys)
 } // expression
 
 //////////////////////////////////////////////////////////////////////
-void actual_parameters_line(symset fsys, mask const*prcd)
+void actual_parameters_line(symset fsys, mask const *prcd)
 {
     symset set, set1;
     mask* mk;
@@ -578,9 +578,10 @@ void actual_parameters_line(symset fsys, mask const*prcd)
             if(!(i = array_position()))
                 error(11);
             else
-                    //mk = (mask *) &table[table_arr[i].first_adr];
-                    (*(prcd->para_link)).address = table_arr[i].first_adr;
-                    gen(LOD, mk->level, table_arr[i].first_adr);
+                for (int j = table_arr[i].first_adr + table_arr[i].sum - 1; j >= table_arr[i].first_adr; j--) {
+                    mk = (mask*) &table[j];
+                    gen(LOD, mk->level, mk->address);
+                }
             getsym();
         }
 		if (prcd->para_link == NULL) {
@@ -1370,11 +1371,11 @@ void formal_parameter_line()
 			error(28);
 		}*/
         ppro->para_num = tx - savedTx;
+		table[savedTx1+1].address = -(ppro->para_num);
         if (isArray) {
             table[tx].kind = ID_ARRAY;
-            table[savedTx1+1].address = (*(prcd->para_link)).address;
-        } else
-            table[savedTx1+1].address = -(ppro->para_num);
+            //table[savedTx1+1].address = -(ppro->para_num) + 1;
+        }
 		prcd->para_link = (mask*)malloc(sizeof(mask));
 		if (prcd->para_link == NULL) {
 			printf("STACK OVERFLOW");
