@@ -1,0 +1,14 @@
+var i,j, a[3][3];
+procedure p(var k, var b[3][3], var m);
+begin
+     write b[0][0],b[1][0],b[2][0],k,m;
+end;
+begin
+    for (i := 0; i < 3; i := i + 1;)
+        begin
+        a[i][0] := i;
+        write a[i][0];
+        end;
+    j := 19;
+    call p(i,a, j);
+end.
