@@ -263,7 +263,7 @@ void test(symset s1, symset s2, int n)
 //////////////////////////////////////////////////////////////////////
 int dx;  // data allocation index
 bool isArray = false;
-
+int pa = 0;
 //////////////////////////////////////////////////////////////////////
 // enter object(constant, variable or procedre) into table.
 void enter(int kind)
@@ -407,7 +407,7 @@ void listcode(int from, int to)
 	printf("\n");
 } // listcode
 
-//////////////////////////////////////////////////////////////////////
+/////////////s/////////////////////////////////////////////////////////
 void factor(symset fsys)
 {
 	void expression(symset fsys);
@@ -577,11 +577,9 @@ void actual_parameters_line(symset fsys, mask const *prcd)
             int i;
             if(!(i = array_position()))
                 error(11);
-            else
-                for (int j = table_arr[i].first_adr + table_arr[i].sum - 1; j >= table_arr[i].first_adr; j--) {
-                    mk = (mask*) &table[j];
-                    gen(LOD, mk->level, mk->address);
-                }
+            else {
+                gen(LOD, 0, table_arr[i].first_adr);
+            }
             getsym();
         }
 		if (prcd->para_link == NULL) {
@@ -1350,7 +1348,7 @@ void control_initialize(void)
 //////////////////////////////////////////////////////////////////////
 void formal_parameter_line() 
 {
-    int savedTx = tx;
+    int savedTx = 0;
     int savedTx1;
 	mask *prcd = &table[tx];
 	mask *const ppro = prcd;
@@ -1370,10 +1368,12 @@ void formal_parameter_line()
 		else {
 			error(28);
 		}*/
-        ppro->para_num = tx - savedTx;
+        ppro->para_num = ++savedTx;
 		table[savedTx1+1].address = -(ppro->para_num);
         if (isArray) {
             table[tx].kind = ID_ARRAY;
+			table[savedTx1+1].address = table[table_arr[++pa].first_adr].address;
+			table[savedTx1+1].level -= 1;
             //table[savedTx1+1].address = -(ppro->para_num) + 1;
         }
 		prcd->para_link = (mask*)malloc(sizeof(mask));
@@ -1389,6 +1389,7 @@ void formal_parameter_line()
 			getsym();
 		}
 		else {
+            pa = 0;
 			break;
 		}
 	}
@@ -1660,7 +1661,7 @@ void interpret()
 			break;
 		case STO:
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			printf("%d\n", stack[top]);
+			//printf("%d\n", stack[top]);
 			top--;
 			break;
 		case STOA:
