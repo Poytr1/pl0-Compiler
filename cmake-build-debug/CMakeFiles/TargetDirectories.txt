@@ -1,3 +1,0 @@
-/Users/poytr1/Downloads/pl0/cmake-build-debug/CMakeFiles/edit_cache.dir
-/Users/poytr1/Downloads/pl0/cmake-build-debug/CMakeFiles/rebuild_cache.dir
-/Users/poytr1/Downloads/pl0/cmake-build-debug/CMakeFiles/pl0.dir

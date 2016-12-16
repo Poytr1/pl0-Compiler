@@ -1,9 +1,0 @@
-var i;
-procedure p(var j);
-begin 
-    j := j + 1;
-end;
-begin 
-    i := 2;
-    call p(i);
-end.
