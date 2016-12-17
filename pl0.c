@@ -602,17 +602,16 @@ void actual_parameters_line(symset fsys, mask const *prcd)
 } // actual parameters line
 
 //////////////////////////////////////////////////////////////////////
-void conditionFactor(symset fsys,int * start,int * end, bool * inParen)
+void conditionFactor(symset fsys,int * trueOutIndex,int * falseOutIndex,bool * isParen)
 {
-    void condition(symset fsys,int * start,int * end, bool * inParen);
+    void condition(symset fsys,int * trueOutIndex,int * falseOutIndex);
     symset set = uniteset(fsys,createset(SYM_RPAREN, SYM_NOT));
 
     if (sym == SYM_LPAREN) {
         getsym();
-        *inParen = true;
-        condition(set,start,end,inParen);
+        condition(set,trueOutIndex,falseOutIndex);
         if (sym == SYM_RPAREN) {
-            *inParen = false;
+            *isParen = true;
             getsym();
         } else {
             error(22);
@@ -623,10 +622,11 @@ void conditionFactor(symset fsys,int * start,int * end, bool * inParen)
 } // conditionFactor
 
 //////////////////////////////////////////////////////////////////////
-void conditionTerm(symset fsys,int * start,int * end,bool * inParen)
+void conditionTerm(symset fsys,int * trueOutIndex,int * falseOutIndex)
 {
     int relop;
     symset set;
+    bool isParen = false;
 
     if (sym == SYM_ODD) {
         getsym();
@@ -635,114 +635,65 @@ void conditionTerm(symset fsys,int * start,int * end,bool * inParen)
     }
     else {
         set = uniteset(relset, fsys);
-        conditionFactor(set, start, end, inParen);
+        conditionFactor(set, trueOutIndex, falseOutIndex,&isParen);
         destroyset(set);
-        if (*inParen) {
-            if (sym == SYM_OR || sym == SYM_AND) {
-                return;
-            } else if (!inset(sym, relset)) {
+        if (!inset(sym, relset)) {
+            if (isParen) {
                 return;
             } else {
-                relop = sym;
-                getsym();
-                conditionFactor(fsys,start,end,inParen);
-                switch (relop) {
-                    case SYM_EQU:
-                        gen(OPR, 0, OPR_LES);
-                        break;
-                    case SYM_NEQ:
-                        gen(OPR, 0, OPR_NEQ);
-                        break;
-                    case SYM_LES:
-                        gen(OPR, 0, OPR_LES);
-                        break;
-                    case SYM_GEQ:
-                        gen(OPR, 0, OPR_GEQ);
-                        break;
-                    case SYM_GTR:
-                        gen(OPR, 0, OPR_GTR);
-                        break;
-                    case SYM_LEQ:
-                        gen(OPR, 0, OPR_LEQ);
-                        break;
-                } // switch
-            } // else
-        } else {
-            if (!inset(sym, relset)) {
                 gen(LIT, 0, 0);
                 gen(JNE, 0, 0);
+                gen(JMP,0,0);
                 return;
-            } else {
-                relop = sym;
-                getsym();
-                conditionFactor(fsys,start,end,inParen);
-                switch (relop) {
-                    case SYM_EQU:
-                        gen(JEQ, 0, 0);
-                        break;
-                    case SYM_NEQ:
-                        gen(JNE, 0, 0);
-                        break;
-                    case SYM_LES:
-                        gen(JL, 0, 0);
-                        break;
-                    case SYM_GEQ:
-                        gen(JGE, 0, 0);
-                        break;
-                    case SYM_GTR:
-                        gen(JG, 0, 0);
-                        break;
-                    case SYM_LEQ:
-                        gen(JLE, 0, 0);
-                        break;
-                } // switch
-            } // else
-        }
-
-//        if (sym == SYM_OR || sym == SYM_AND) {
-//            return;
-//        } else if (!inset(sym, relset)) {
-//            gen(LIT, 0, 0);
-//            gen(JNE, 0, 0);
-//            return;
-//        } else {
-//            relop = sym;
-//            getsym();
-//            conditionFactor(fsys,start,end,hasParen);
-//            switch (relop) {
-//                case SYM_EQU:
-//                    gen(JEQ, 0, 0);
-//                    break;
-//                case SYM_NEQ:
-//                    gen(JNE, 0, 0);
-//                    break;
-//                case SYM_LES:
-//                    gen(JL, 0, 0);
-//                    break;
-//                case SYM_GEQ:
-//                    gen(JGE, 0, 0);
-//                    break;
-//                case SYM_GTR:
-//                    gen(JG, 0, 0);
-//                    break;
-//                case SYM_LEQ:
-//                    gen(JLE, 0, 0);
-//                    break;
-//            } // switch
-//        } // else
+            }
+        } else {
+            relop = sym;
+            getsym();
+            conditionFactor(fsys,trueOutIndex,falseOutIndex,isParen);
+            switch (relop) {
+                case SYM_EQU:
+                    gen(JEQ, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+                case SYM_NEQ:
+                    gen(JNE, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+                case SYM_LES:
+                    gen(JL, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+                case SYM_GEQ:
+                    gen(JGE, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+                case SYM_GTR:
+                    gen(JG, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+                case SYM_LEQ:
+                    gen(JLE, 0, 0);
+                    gen(JMP,0,0);
+                    break;
+            } // switch
+        } // else
     } // else
 } //conditionTerm
 
 //////////////////////////////////////////////////////////////////////
-void condition(symset fsys,int * start,int * end,bool * inParen)
+void condition(symset fsys,int * trueOutIndex,int * falseOutIndex)
 {
 
 	int conditionOp;
+    int localTrueOut1 = 0;
+    int localFalseOut1 = 0;
+    int localTrueOut2 = 0;
+    int localFalseOut2 = 0;
 	symset set = uniteset(fsys, logicSet);
 
 	if (sym == SYM_NOT) {
 		getsym();
-		conditionTerm(set,start,end,inParen);
+		conditionTerm(set,trueOutIndex,falseOutIndex);
         switch (code[cx-1].f) {
             case JEQ:
                 code[cx-1].f = JNE;
@@ -765,106 +716,45 @@ void condition(symset fsys,int * start,int * end,bool * inParen)
             default:
                 break;
         }
-        scx[*end] = cx-1;
-        andOr[(*end)++] = 3;
+//        scx[*end] = cx-1;
+//        andOr[(*end)++] = 3;
         ccx++;
 	} else {
-		conditionTerm(set,start,end,inParen);
+		conditionTerm(set,&localTrueOut1,&localFalseOut1);
 	}
-    if (sym == SYM_OR) {
-        if (!(*inParen)) {
-            scx[*end] = cx-1;
-            andOr[(*end)++] = 2;
-            ccx++;
-        }
-    } else {
-        if (!(*inParen)) {
-            switch (code[cx-1].f) {
-                case JEQ:
-                    code[cx-1].f = JNE;
-                    break;
-                case JNE:
-                    code[cx-1].f = JEQ;
-                    break;
-                case JL:
-                    code[cx-1].f = JGE;
-                    break;
-                case JLE:
-                    code[cx-1].f = JG;
-                    break;
-                case JG:
-                    code[cx-1].f = JLE;
-                    break;
-                case JGE:
-                    code[cx-1].f = JL;
-                    break;
-                default:
-                    break;
-            }
-            scx[*end] = cx-1;
-            andOr[(*end)++] = 3;
-            ccx++;
-        }
-    }
-//	else{
-//        andOr[*end] = 2;
-//        scx[(*end)++] = cx-1;
-//        ccx++;
-//		destroyset(set);
-//        return;
-//	}
+    *trueOutIndex = cx-2;
+    *falseOutIndex = cx-1;
+
 	while (sym == SYM_AND || sym == SYM_OR) {
 
-        if (*inParen) {
-            conditionOp = sym;
-            getsym();
-            conditionTerm(set,start,end,inParen);
-            if (conditionOp != SYM_OR) {
-                gen(OPR,0,OPR_AND);
-            } else {
-                gen(OPR,0,OPR_OR);
+        conditionOp = sym;
+        getsym();
+        if (conditionOp == SYM_OR) {
+            if (localFalseOut1 != 0) {
+                code[localFalseOut1].a = cx;
             }
-        } else {
-            conditionOp = sym;
-            getsym();
-            conditionTerm(set,start,end,inParen);
-            if (conditionOp != SYM_OR) {
-                switch (code[cx-1].f) {
-                    case JEQ:
-                        code[cx-1].f = JNE;
-                        break;
-                    case JNE:
-                        code[cx-1].f = JEQ;
-                        break;
-                    case JL:
-                        code[cx-1].f = JGE;
-                        break;
-                    case JLE:
-                        code[cx-1].f = JG;
-                        break;
-                    case JG:
-                        code[cx-1].f = JLE;
-                        break;
-                    case JGE:
-                        code[cx-1].f = JL;
-                        break;
-                }
-                scx[*end] = cx-1;
-                andOr[(*end)++] = 3;
-                ccx++;
-            } else {
-                scx[*end] = cx-1;
-                andOr[(*end)++] = 2;
-                ccx++;
+            code[*falseOutIndex].a = cx;
+            conditionTerm(set,&localTrueOut2,&localFalseOut2);
+            if (localTrueOut1 != 0) {
+                code[localTrueOut1].a = cx;
             }
+            code[*trueOutIndex].a = cx;
+            *trueOutIndex = cx-2;
+            *falseOutIndex = cx-1;
+        } else if (conditionOp == SYM_AND) {
+            if (localTrueOut1 != 0) {
+                code[localTrueOut1].a = cx;
+            }
+            code[*trueOutIndex].a = cx;
+            conditionTerm(set,&localTrueOut2,&localFalseOut2);
+            if (localFalseOut1 != 0) {
+                code[localFalseOut1].a = cx;
+            }
+            code[*falseOutIndex].a = cx-1;
+            *trueOutIndex = cx-2;
+            *falseOutIndex = cx-1;
         }
 	}
-    if (conditionOp == SYM_OR && !(*inParen)) {
-        gen(JMP,0,0);
-        scx[*end] = cx-1;
-        andOr[(*end)++] = 2;
-        ccx++;
-    }
 	destroyset(set);
 } //condition
 
@@ -875,6 +765,8 @@ void statement(symset fsys)
 	int i,j;
 	int wide = 0;
 	symset set1, set;
+    int trueOutIndex = 0;
+    int falseOutIndex = 0;
 	mask* mk;
 
 	if (sym == SYM_IDENTIFIER)
@@ -1075,14 +967,11 @@ void statement(symset fsys)
 	} 
 	else if (sym == SYM_IF)
 	{ // if statement
-		int sym1,cc1,cx3,cx4;//for else
-        int start = ccx;
-        int end = ccx;
-        bool inParen = false;
+		int sym1,cx3;//for else
         getsym();
         set1 = createset(SYM_THEN, SYM_ELSE,SYM_DO, SYM_NULL);
         set = uniteset(set1, fsys);
-        condition(set,&start,&end,&inParen);
+        condition(set,&trueOutIndex,&falseOutIndex);
         destroyset(set1);
         destroyset(set);
         if (sym == SYM_THEN)
@@ -1094,7 +983,7 @@ void statement(symset fsys)
             error(16); // 'then' expected.
         }
 
-        cx4 = cx;
+        code[trueOutIndex].a = cx;
         statement(fsys);
 //        code[cx2-1].a = cx;
 		cx3=cx;
@@ -1103,21 +992,7 @@ void statement(symset fsys)
 		getsym();
 		if (sym==SYM_ELSE)
 		{
-			for (int m = start; m < end; ++m) {
-            	if (scx[m] != 0) {
-                	if (andOr[m] == 3) {
-                  	  code[scx[m]].a = cx;
-                	} else {
-                    	if (m == end - 1) {
-                       		code[scx[m]].a = cx;
-                    	} else {
-                        	code[scx[m]].a = cx4;
-                    	}
-                	}
-            	} else {
-                	break;
-            	}
-			}
+            code[falseOutIndex].a = cx;
 			getsym();
 			statement(fsys);
 			code[cx3].a=cx;
@@ -1125,21 +1000,7 @@ void statement(symset fsys)
 		}
 		else
 		{	
-			for (int m = start; m < end; ++m) {
-            	if (scx[m] != 0) {
-                	if (andOr[m] == 3) {
-                    	code[scx[m]].a = cx;
-                	} else {
-                    	if (m == end - 1) {
-                        	code[scx[m]].a = cx;
-                    	} else {
-                        	code[scx[m]].a = cx4;
-                    	}
-                	}
-            	} else {
-                	break;
-            	}
-			}
+			code[falseOutIndex].a = cx;
 			code[cx3].a=cx;
 			statement(fsys);
 		}
@@ -1176,21 +1037,16 @@ void statement(symset fsys)
 	}
 	else if (sym == SYM_WHILE)
 	{ // while statement
-		int cx3,i,cx4,cx0;
-
-        int start = ccx;
-        int end = ccx;
-        bool inParen = false;
+		int cx0;
 		loop_level++;
         cx0 = cx;
 		loop_begin[loop_level]=cx;
         getsym();
         set1 = createset(SYM_DO,SYM_BREAK,SYM_NULL,SYM_CONTINUE);
         set = uniteset(set1, fsys);
-        condition(set,&start,&end,&inParen);
+        condition(set,&trueOutIndex,&falseOutIndex);
         destroyset(set1);
         destroyset(set);
-        cx3 = cx;
         if (sym == SYM_DO)
         {
             getsym();
@@ -1199,9 +1055,10 @@ void statement(symset fsys)
         {
             error(18); // 'do' expected.
         }
-        cx4 = cx;
+        code[trueOutIndex].a = cx;
         statement(fsys);
         gen(JMP, 0, cx0);
+        code[falseOutIndex].a = cx;
 		////////////////////////for while
 		struct break_link_list *head;
 		head=breaks[loop_level];
@@ -1217,28 +1074,10 @@ void statement(symset fsys)
 		loop_level--;
 		loop_begin[loop_level]=-1;
 		////////////////////////////////
-        for (int m = start; m < end; ++m) {
-            if (scx[m] != 0) {
-                if (andOr[m] == 3) {
-                    code[scx[m]].a = cx;
-                } else {
-                    if (m == end-1) {
-                        code[scx[m]].a = cx;
-                    } else {
-                        code[scx[m]].a = cx4;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
     }
 	else if(sym==SYM_FOR)
 	{
 		int i,cx3,cx4,cx0;
-        int start = ccx;
-        int end = ccx;
-        bool inParen = false;
 		loop_level++;
 		getsym();
 		if(sym==SYM_LPAREN)
@@ -1251,7 +1090,7 @@ void statement(symset fsys)
 		getsym();
 		set1 = createset(SYM_BREAK,SYM_NULL,SYM_SEMICOLON,SYM_CONTINUE);
         set = uniteset(set1, fsys);
-        condition(set,&start,&end,&inParen);
+        condition(set,&trueOutIndex,&falseOutIndex);
         destroyset(set1);
         destroyset(set);
 		cx3 = cx;//skip loop step
@@ -1262,6 +1101,7 @@ void statement(symset fsys)
 		gen(JMP,0,cx0);
 		code[cx3].a=cx;
 		getsym();
+        code[trueOutIndex].a = cx;
 		statement(fsys);
 		gen(JMP,0,cx3+1);
 		//////////////for break
@@ -1277,21 +1117,7 @@ void statement(symset fsys)
 			while(head!=NULL);
 		}
 		/////////////
-		for (int m = start; m < end; ++m) {
-            if (scx[m] != 0) {
-                if (andOr[m] == 3) {
-                    code[scx[m]].a = cx;
-                } else {
-                    if (m == end-1) {
-                        code[scx[m]].a = cx;
-                    } else {
-                        code[scx[m]].a = cx3;
-                    }
-                }
-            } else {
-                break;
-            }
-        }
+		code[falseOutIndex].a = cx;
 		loop_level--;
 		loop_begin[loop_level]=-1;
 	}
@@ -1555,6 +1381,87 @@ int base(int stack[], int currentLevel, int levelDiff)
 	return b;
 } // base
 
+void optimization() {
+    int index = 0;
+    while (index < cx) {
+        instruction current = code[index];
+        instruction last;
+        instruction temp = current;
+        if (current.f == JMP) {
+            //optimization for jump chain
+            do {
+                last = temp;
+                temp = code[temp.a];
+            } while (temp.f == JMP);
+            code[index].a = last.a;
+        }
+
+        index++;
+    }
+    index = 0;
+    while (index < cx) {
+        instruction current = code[index];
+        if (current.f == JG || current.f == JGE || current.f == JEQ ||
+                   current.f == JNE || current.f == JL || current.f == JLE) {
+            //optimization for merge jump
+            if (current.a == index+2) {
+                if (code[index+1].f == JMP) {
+                    switch (current.f) {
+                        case JG:    code[index].f = JLE;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                        case JL:    code[index].f = JGE;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                        case JLE:   code[index].f = JG;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                        case JGE:   code[index].f = JL;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                        case JEQ:   code[index].f = JNE;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                        case JNE:   code[index].f = JEQ;
+                                    code[index].a = code[index+1].a;
+                                    break;
+                    }
+                    for (int i = index+1; i < cx; ++i) {
+                        code[i] = code[i+1];
+                    }
+                    for (int j = 0; j < cx ; ++j) {
+                        if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
+                            code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
+                            if (code[j].a > index) {
+                                code[j].a--;
+                            }
+                        }
+                    }
+                    cx--;
+                }
+            }
+        } else if (current.f == JMP && index) {
+            if (current.a == index + 1) {
+                for (int i = index; i < cx; ++i) {
+                    code[i] = code[i+1];
+                }
+                for (int j = 0; j < cx ; ++j) {
+                    if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
+                        code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
+                        if (code[j].a > index) {
+                            code[j].a--;
+                        }
+                    }
+                }
+                cx--;
+            }
+        }
+
+        index++;
+    }
+
+}
+
 //////////////////////////////////////////////////////////////////////
 // interprets and executes codes.
 void interpret()
@@ -1672,6 +1579,7 @@ void interpret()
 			case WRITE:
 				printf("%d\n",stack[base(stack, b, i.l) + i.a]);
 				break;
+<<<<<<< HEAD
 			case WRITEA:
 				printf("%d\n",stack[base(stack, b, i.l) + i.a+ stack[top]]);
 				break;
@@ -1689,6 +1597,56 @@ void interpret()
 				stack[top + 2] = b;
 				stack[top + 3] = pc;
 				b = top + 1;
+=======
+			} // switch
+			break;
+		case LOD:
+			stack[++top] = stack[base(stack, b, i.l) + i.a];
+			break;
+		case LODA:
+			stack[top] = stack[base(stack, b, i.l) + i.a+ stack[top]] ;
+			break;
+		case STO:
+			stack[base(stack, b, i.l) + i.a] = stack[top];
+			printf("%d\n", stack[top]);
+			top--;
+			break;
+		case STOA:
+			stack[base(stack, b, i.l) + i.a + stack[top -1]] = stack[top];
+			//printf("%d\n", stack[top]);
+			top--;
+			break;
+		case WRITE:
+			printf("%d\n",stack[base(stack, b, i.l) + i.a]);
+			break;
+		case WRITEA:
+			printf("%d\n",stack[base(stack, b, i.l) + i.a+ stack[top]]);
+			break;
+		case READ:
+			scanf("%d",&temp);
+			stack[base(stack, b, i.l) + i.a] = temp;
+			break;
+		case READA:
+			scanf("%d",&temp);
+			stack[base(stack, b, i.l) + i.a+ stack[top]] = temp;
+			break;
+		case CAL:
+			stack[top + 1] = base(stack, b, i.l);
+			// generate new block mark
+			stack[top + 2] = b;
+			stack[top + 3] = pc;
+			b = top + 1;
+			pc = i.a;
+			break;
+		case INT:
+			top += i.a;
+			break;
+		case JMP:
+			pc = i.a;
+			break;
+		case JPC:
+			if (stack[top] == 0)
+>>>>>>> origin/master
 				pc = i.a;
 				break;
 			case INT:
@@ -1817,6 +1775,9 @@ int main()
 			fwrite(&code[i], sizeof(instruction), 1, hbin);
 		fclose(hbin);
 	}
+
+    optimization();
+
 	if (err == 0)
 		interpret();
 	else
