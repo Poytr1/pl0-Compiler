@@ -14,6 +14,7 @@
 
 #define MAXDIM     5
 #define AXMAX      10
+
 #define MAXSYM     30     // maximum number of symbols  
 
 #define STACKSIZE  1000   // maximum storage
@@ -221,6 +222,7 @@ typedef struct
 } arr;
 
 arr array_temp,table_arr[AXMAX];
+
 mask table[TXMAX];
 FILE* infile;
 

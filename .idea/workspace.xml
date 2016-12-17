@@ -11,13 +11,7 @@
     </configurations>
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="51e74b89-325e-4b2a-82f7-5e9863198adb" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/misc.xml" afterPath="$PROJECT_DIR$/.idea/misc.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/pl0.iml" afterPath="$PROJECT_DIR$/.idea/pl0.iml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/PL0.h" afterPath="$PROJECT_DIR$/PL0.h" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pl0.c" afterPath="$PROJECT_DIR$/pl0.c" />
-    </list>
+    <list default="true" id="51e74b89-325e-4b2a-82f7-5e9863198adb" name="Default" comment="" />
     <ignored path="pl0.iws" />
     <ignored path=".idea/workspace.xml" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -39,8 +33,8 @@
       <file leaf-file-name="pl0.c" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/pl0.c">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="23400">
-              <caret line="1560" column="0" lean-forward="false" selection-start-line="1560" selection-start-column="0" selection-end-line="1560" selection-end-column="0" />
+            <state relative-caret-position="22005">
+              <caret line="1467" column="0" lean-forward="false" selection-start-line="1467" selection-start-column="0" selection-end-line="1467" selection-end-column="0" />
               <folding>
                 <element signature="e#183#440#0" expanded="false" />
                 <element signature="e#451#918#0" expanded="false" />
@@ -79,7 +73,7 @@
         <entry file="file://$PROJECT_DIR$/PL0.h">
           <provider selected="true" editor-type-id="text-editor">
             <state relative-caret-position="125">
-              <caret line="64" column="19" lean-forward="true" selection-start-line="64" selection-start-column="19" selection-end-line="64" selection-end-column="19" />
+              <caret line="64" column="19" lean-forward="false" selection-start-line="64" selection-start-column="19" selection-end-line="64" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -278,11 +272,12 @@
       <workItem from="1479730759711" duration="1657000" />
       <workItem from="1481851642125" duration="5387000" />
       <workItem from="1481859604364" duration="814000" />
+      <workItem from="1481986558727" duration="4000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="7858000" />
+    <option name="totallyTimeSpent" value="7862000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="0" width="1280" height="800" extended-state="0" />
@@ -396,6 +391,59 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pl0.c">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="23400">
+          <caret line="1560" column="0" lean-forward="false" selection-start-line="1560" selection-start-column="0" selection-end-line="1560" selection-end-column="0" />
+          <folding>
+            <element signature="e#183#440#0" expanded="false" />
+            <element signature="e#451#918#0" expanded="false" />
+            <element signature="e#947#1390#0" expanded="false" />
+            <element signature="e#1401#4095#0" expanded="false" />
+            <element signature="e#4107#4385#0" expanded="false" />
+            <element signature="e#4394#4718#0" expanded="false" />
+            <element signature="e#4867#5439#0" expanded="false" />
+            <element signature="e#5450#5737#0" expanded="false" />
+            <element signature="e#5754#5993#0" expanded="false" />
+            <element signature="e#6007#6198#0" expanded="false" />
+            <element signature="e#6218#6821#0" expanded="false" />
+            <element signature="e#6843#7557#0" expanded="false" />
+            <element signature="e#7577#7834#0" expanded="false" />
+            <element signature="e#7848#9582#0" expanded="false" />
+            <element signature="e#9594#10018#0" expanded="false" />
+            <element signature="e#10028#10612#0" expanded="false" />
+            <element signature="e#10628#11424#0" expanded="false" />
+            <element signature="e#11452#12027#0" expanded="false" />
+            <element signature="e#12048#15504#0" expanded="false" />
+            <element signature="e#15522#19117#0" expanded="false" />
+            <element signature="e#19131#28500#0" expanded="false" />
+            <element signature="e#28515#28841#0" expanded="false" />
+            <element signature="e#28865#30011#0" expanded="false" />
+            <element signature="e#30144#30999#0" expanded="false" />
+            <element signature="e#31022#32849#0" expanded="false" />
+            <element signature="e#32860#33061#0" expanded="false" />
+            <element signature="e#33071#37348#0" expanded="false" />
+            <element signature="e#37363#38936#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/PL0.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/set.c">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1185">
+          <caret line="79" column="16" lean-forward="false" selection-start-line="79" selection-start-column="16" selection-end-line="79" selection-end-column="16" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/pl0.c">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="3435">
           <caret line="229" column="5" lean-forward="true" selection-start-line="229" selection-start-column="5" selection-end-line="229" selection-end-column="5" />
           <folding>
@@ -450,8 +498,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pl0.c">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="23400">
-          <caret line="1560" column="0" lean-forward="false" selection-start-line="1560" selection-start-column="0" selection-end-line="1560" selection-end-column="0" />
+        <state relative-caret-position="22005">
+          <caret line="1467" column="0" lean-forward="false" selection-start-line="1467" selection-start-column="0" selection-end-line="1467" selection-end-column="0" />
           <folding>
             <element signature="e#183#440#0" expanded="false" />
             <element signature="e#451#918#0" expanded="false" />
@@ -488,7 +536,7 @@
     <entry file="file://$PROJECT_DIR$/PL0.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="125">
-          <caret line="64" column="19" lean-forward="true" selection-start-line="64" selection-start-column="19" selection-end-line="64" selection-end-column="19" />
+          <caret line="64" column="19" lean-forward="false" selection-start-line="64" selection-start-column="19" selection-end-line="64" selection-end-column="19" />
           <folding />
         </state>
       </provider>
