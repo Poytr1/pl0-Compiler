@@ -80,7 +80,10 @@ enum opcode
 enum oprcode
 {
 	OPR_RET, OPR_NEG, OPR_ADD, OPR_MIN,
-	OPR_MUL, OPR_DIV, OPR_ODD, OPR_CPY,
+	OPR_MUL, OPR_DIV, OPR_ODD, OPR_EQU,
+	OPR_NEQ, OPR_LES, OPR_LEQ, OPR_GTR,
+	OPR_GEQ, OPR_CPY, OPR_OPP, OPR_AND,
+    OPR_OR
 };
 
 
@@ -142,7 +145,10 @@ int  cx;         // index of current instruction to be generated.
 int  level = 0;
 int  tx = 0;
 int  ax = 0;
+int  scx[100] = {0};       //index for short-circuit logic operation
+int  andOr[100] = {-1};             //0 stand for and,1 stand for or
 int  ccx = 0;
+int  m = 0;
 ////////////////for break
 int loop_level;
 int loop_begin[20];
