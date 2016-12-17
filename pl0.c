@@ -1549,7 +1549,7 @@ void block(symset fsys, int tx0)
 int base(int stack[], int currentLevel, int levelDiff)
 {
 	int b = currentLevel;
-	
+
 	while (levelDiff--)
 		b = stack[b];
 	return b;
@@ -1566,7 +1566,7 @@ void interpret()
 	instruction i; // instruction register
 	int first = 0;
 	int last = 0;
-    int tmp;
+	int tmp;
 	int temp;
 	printf("Begin executing PL/0 program.\n");
 
@@ -1579,181 +1579,181 @@ void interpret()
 		i = code[pc++];
 		switch (i.f)
 		{
-		case LIT:
-			stack[++top] = i.a;
-			break;
-		case OPR:
-			switch (i.a) // operator
-			{
-			case OPR_RET:
-				top = b - 1;
-				pc = stack[top + 3];
-				b = stack[top + 2];
+			case LIT:
+				stack[++top] = i.a;
 				break;
-			case OPR_NEG:
-				stack[top] = -stack[top];
-				break;
-			case OPR_ADD:
-				top--;
-				stack[top] += stack[top + 1];
-				break;
-			case OPR_MIN:
-				top--;
-				stack[top] -= stack[top + 1];
-				break;
-			case OPR_MUL:
-				top--;
-				stack[top] *= stack[top + 1];
-				break;
-			case OPR_DIV:
-				top--;
-				if (stack[top + 1] == 0)
+			case OPR:
+				switch (i.a) // operator
 				{
-					fprintf(stderr, "Runtime Error: Divided by zero.\n");
-					fprintf(stderr, "Program terminated.\n");
-					continue;
-				}
-				stack[top] /= stack[top + 1];
+					case OPR_RET:
+						top = b - 1;
+						pc = stack[top + 3];
+						b = stack[top + 2];
+						break;
+					case OPR_NEG:
+						stack[top] = -stack[top];
+						break;
+					case OPR_ADD:
+						top--;
+						stack[top] += stack[top + 1];
+						break;
+					case OPR_MIN:
+						top--;
+						stack[top] -= stack[top + 1];
+						break;
+					case OPR_MUL:
+						top--;
+						stack[top] *= stack[top + 1];
+						break;
+					case OPR_DIV:
+						top--;
+						if (stack[top + 1] == 0)
+						{
+							fprintf(stderr, "Runtime Error: Divided by zero.\n");
+							fprintf(stderr, "Program terminated.\n");
+							continue;
+						}
+						stack[top] /= stack[top + 1];
+						break;
+					case OPR_ODD:
+						stack[top] %= 2;
+						break;
+					case OPR_EQU:
+						top--;
+						stack[top] = stack[top] == stack[top + 1];
+						break;
+					case OPR_NEQ:
+						top--;
+						stack[top] = stack[top] != stack[top + 1];
+					case OPR_LES:
+						top--;
+						stack[top] = stack[top] < stack[top + 1];
+						break;
+					case OPR_GEQ:
+						top--;
+						stack[top] = stack[top] >= stack[top + 1];
+					case OPR_GTR:
+						top--;
+						stack[top] = stack[top] > stack[top + 1];
+						break;
+					case OPR_LEQ:
+						top--;
+						stack[top] = stack[top] <= stack[top + 1];
+						break;
+					case OPR_OPP:
+						stack[top] = !stack[top];
+						break;
+					case OPR_AND:
+						top--;
+						stack[top] = stack[top] && stack[top + 1];
+						break;
+					case OPR_OR:
+						top--;
+						stack[top] = stack[top] || stack[top + 1];
+						break;
+				} // switch
 				break;
-			case OPR_ODD:
-				stack[top] %= 2;
+			case LOD:
+				stack[++top] = stack[base(stack, b, i.l) + i.a];
 				break;
-			case OPR_EQU:
-				top--;
-				stack[top] = stack[top] == stack[top + 1];
+			case LODA:
+				stack[top] = stack[base(stack, b, i.l) + i.a+ stack[top]] ;
 				break;
-			case OPR_NEQ:
+			case STO:
+				stack[base(stack, b, i.l) + i.a] = stack[top];
+				//printf("%d\n", stack[top]);
 				top--;
-				stack[top] = stack[top] != stack[top + 1];
-			case OPR_LES:
-				top--;
-				stack[top] = stack[top] < stack[top + 1];
 				break;
-			case OPR_GEQ:
+			case STOA:
+				stack[base(stack, b, i.l) + i.a + stack[top -1]] = stack[top];
+				//printf("%d\n", stack[top]);
 				top--;
-				stack[top] = stack[top] >= stack[top + 1];
-			case OPR_GTR:
-				top--;
-				stack[top] = stack[top] > stack[top + 1];
 				break;
-			case OPR_LEQ:
-				top--;
-				stack[top] = stack[top] <= stack[top + 1];
-                break;
-            case OPR_OPP:
-                stack[top] = !stack[top];
-                break;
-            case OPR_AND:
-                top--;
-                stack[top] = stack[top] && stack[top + 1];
-                break;
-            case OPR_OR:
-                top--;
-                stack[top] = stack[top] || stack[top + 1];
-                break;
-			} // switch
-			break;
-		case LOD:
-			stack[++top] = stack[base(stack, b, i.l) + i.a];
-			break;
-		case LODA:
-			stack[top] = stack[base(stack, b, i.l) + i.a+ stack[top]] ;
-			break;
-		case STO:
-			stack[base(stack, b, i.l) + i.a] = stack[top];
-			//printf("%d\n", stack[top]);
-			top--;
-			break;
-		case STOA:
-			stack[base(stack, b, i.l) + i.a + stack[top -1]] = stack[top];
-			//printf("%d\n", stack[top]);
-			top--;
-			break;
-		case WRITE:
-			printf("%d\n",stack[base(stack, b, i.l) + i.a]);
-			break;
-		case WRITEA:
-			printf("%d\n",stack[base(stack, b, i.l) + i.a+ stack[top]]);
-			break;
-		case READ:
-			scanf("%d",&temp);
-			stack[base(stack, b, i.l) + i.a] = temp;
-			break;
-		case READA:
-			scanf("%d",&temp);
-			stack[base(stack, b, i.l) + i.a+ stack[top]] = temp;
-			break;
-		case CAL:
-			stack[top + 1] = base(stack, b, i.l);
-			// generate new block mark
-			stack[top + 2] = b;
-			stack[top + 3] = pc;
-			b = top + 1;
-			pc = i.a;
-			break;
-		case INT:
-			top += i.a;
-			break;
-		case JMP:
-			pc = i.a;
-			break;
-		case JPC:
-			if (stack[top] == 0)
+			case WRITE:
+				printf("%d\n",stack[base(stack, b, i.l) + i.a]);
+				break;
+			case WRITEA:
+				printf("%d\n",stack[base(stack, b, i.l) + i.a+ stack[top]]);
+				break;
+			case READ:
+				scanf("%d",&temp);
+				stack[base(stack, b, i.l) + i.a] = temp;
+				break;
+			case READA:
+				scanf("%d",&temp);
+				stack[base(stack, b, i.l) + i.a+ stack[top]] = temp;
+				break;
+			case CAL:
+				stack[top + 1] = base(stack, b, i.l);
+				// generate new block mark
+				stack[top + 2] = b;
+				stack[top + 3] = pc;
+				b = top + 1;
 				pc = i.a;
-			top--;
-			break;
-        case JPF:
-            if (stack[top] == 0)
-                pc = i.a;
-            break;
-        case JPT:
-            if (stack[top] != 0)
-                pc = i.a;
-            break;
-        case JEQ:
-            if (stack[top-1] == stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-        case JNE:
-            if (stack[top-1] != stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-        case JL:
-            if (stack[top-1] < stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-        case JLE:
-            if (stack[top-1] <= stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-        case JG:
-            if (stack[top-1] > stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-        case JGE:
-            if (stack[top-1] >= stack[top])
-                pc = i.a;
-            top-=2;
-            break;
-		case POPA:
-			top -= i.a;
-			break;
-	    case REVA:
-			first = top - i.a + 1;
-			last = top + 1;
-			if (last - first >= 2) {
-				for (; first < (last--); ++first) {
-					int temp = stack[first];
-					stack[first] = stack[last];
-					stack[last] = temp;
+				break;
+			case INT:
+				top += i.a;
+				break;
+			case JMP:
+				pc = i.a;
+				break;
+			case JPC:
+				if (stack[top] == 0)
+					pc = i.a;
+				top--;
+				break;
+			case JPF:
+				if (stack[top] == 0)
+					pc = i.a;
+				break;
+			case JPT:
+				if (stack[top] != 0)
+					pc = i.a;
+				break;
+			case JEQ:
+				if (stack[top-1] == stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case JNE:
+				if (stack[top-1] != stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case JL:
+				if (stack[top-1] < stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case JLE:
+				if (stack[top-1] <= stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case JG:
+				if (stack[top-1] > stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case JGE:
+				if (stack[top-1] >= stack[top])
+					pc = i.a;
+				top-=2;
+				break;
+			case POPA:
+				top -= i.a;
+				break;
+			case REVA:
+				first = top - i.a + 1;
+				last = top + 1;
+				if (last - first >= 2) {
+					for (; first < (last--); ++first) {
+						int temp = stack[first];
+						stack[first] = stack[last];
+						stack[last] = temp;
+					}
 				}
-			}
-			break;
+				break;
 		} // switch
 	}
 	while (pc);
