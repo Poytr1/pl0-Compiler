@@ -577,11 +577,11 @@ void actual_parameters_line(symset fsys, mask const *prcd)
             int i;
             if(!(i = array_position()))
                 error(11);
-            else
-                for (int j = table_arr[i].first_adr + table_arr[i].sum - 1; j >= table_arr[i].first_adr; j--) {
-                    mk = (mask*) &table[j];
-                    gen(LOD, mk->level, mk->address);
-                }
+            else {
+				mk = (mask*)&table[table_arr[i].first_adr];
+				gen(LOD, mk->level, mk->address);
+				(*(prcd->para_link)).address = mk->address;
+			}
             getsym();
         }
 		if (prcd->para_link == NULL) {
@@ -760,6 +760,7 @@ void condition(symset fsys,int * trueOutIndex,int * falseOutIndex)
 	destroyset(set);
 } //condition
 
+void para_arr(mask const *prcd);
 //////////////////////////////////////////////////////////////////////
 void statement(symset fsys)
 {
@@ -948,6 +949,7 @@ void statement(symset fsys)
 					set = uniteset(fsys, set1);
 					actual_parameters_line(set, mk);
 					gen(REVA, 0, mk->para_num);
+					para_arr(mk);
 					gen(CAL, level - mk->level, mk->address);
 					gen(POPA, 0, mk->para_num);
 					if (sym == SYM_RPAREN) {
@@ -1177,7 +1179,7 @@ void control_initialize(void)
 void formal_parameter_line() 
 {
     int savedTx = tx;
-    int savedTx1;
+    int savedTx1 = 0;
 	mask *prcd = &table[tx];
 	mask *const ppro = prcd;
 	ppro->para_num = 0;
@@ -1186,21 +1188,16 @@ void formal_parameter_line()
 	while (1) {
         if (sym == SYM_VAR) {
             getsym();
-            savedTx1 = tx;
+            //savedTx1 = tx;
             vardeclaration();
+			savedTx1++;
         }
         else error(29);
-		/*if (sym == SYM_COLON) {
-			getsym();
-		}
-		else {
-			error(28);
-		}*/
-        ppro->para_num = tx - savedTx;
-		table[savedTx1+1].address = -(ppro->para_num);
+        ppro->para_num = savedTx1;
+		table[tx].address = -(ppro->para_num);
         if (isArray) {
-            table[tx].kind = ID_ARRAY;
-            //table[savedTx1+1].address = -(ppro->para_num) + 1;
+            table[savedTx+savedTx1].kind = ID_ARRAY;
+            table[savedTx1+savedTx].address = -(ppro->para_num);
         }
 		prcd->para_link = (mask*)malloc(sizeof(mask));
 		if (prcd->para_link == NULL) {
@@ -1208,6 +1205,9 @@ void formal_parameter_line()
 			exit(1);
 		}
 		*(prcd->para_link) = table[tx];
+		if (isArray) {
+			*(prcd->para_link) = table[savedTx+savedTx1];
+		}
 		prcd = prcd->para_link;
 		assert(prcd->para_link == NULL);
 		prcd->para_link = NULL;
@@ -1371,6 +1371,111 @@ void block(symset fsys, int tx0)
 } // block
 
 //////////////////////////////////////////////////////////////////////
+void optimization()
+{
+	int index = 0;
+	while (index < cx) {
+		instruction current = code[index];
+		instruction last;
+		instruction temp = current;
+		if (current.f == JMP) {
+			//optimization for jump chain
+			do {
+				last = temp;
+				temp = code[temp.a];
+			} while (temp.f == JMP);
+			code[index].a = last.a;
+		}
+
+		index++;
+	}
+	index = 3;
+	while (index < cx) {
+		instruction current = code[index];
+		if (current.f == JG || current.f == JGE || current.f == JEQ ||
+			current.f == JNE || current.f == JL || current.f == JLE) {
+			//optimization for merge jump
+			if (current.a == index+2) {
+				if (code[index+1].f == JMP) {
+					switch (current.f) {
+						case JG:    code[index].f = JLE;
+							code[index].a = code[index+1].a;
+							break;
+						case JL:    code[index].f = JGE;
+							code[index].a = code[index+1].a;
+							break;
+						case JLE:   code[index].f = JG;
+							code[index].a = code[index+1].a;
+							break;
+						case JGE:   code[index].f = JL;
+							code[index].a = code[index+1].a;
+							break;
+						case JEQ:   code[index].f = JNE;
+							code[index].a = code[index+1].a;
+							break;
+						case JNE:   code[index].f = JEQ;
+							code[index].a = code[index+1].a;
+							break;
+					}
+					for (int i = index+1; i < cx; ++i) {
+						code[i] = code[i+1];
+					}
+					for (int j = 0; j < cx ; ++j) {
+						if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
+							code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
+							if (code[j].a > index) {
+								code[j].a--;
+							}
+						}
+					}
+					cx--;
+				}
+			}
+		} else if (current.f == JMP && index) {
+			if (current.a == index + 1) {
+				for (int i = index; i < cx; ++i) {
+					code[i] = code[i+1];
+				}
+				for (int j = 0; j < cx ; ++j) {
+					if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
+						code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
+						if (code[j].a > index) {
+							code[j].a--;
+						}
+					}
+				}
+				cx--;
+			}
+		}
+
+		index++;
+	}
+
+} // optimization
+
+//////////////////////////////////////////////////////////////////////
+void para_arr(mask const *prcd)
+{
+	int adr[10], index = 0, pro_level = prcd->level + 1, initial_adr = prcd->address;
+	assert(prcd != NULL);
+	while (prcd->para_link != NULL) {
+		adr[index++] = (*(prcd->para_link)).address;
+		if (prcd->para_link == NULL) {
+			error(26);
+		} else {
+			prcd = prcd->para_link;
+		}
+	}
+	for (int i = initial_adr; (code[i].f != OPR) || (code[i].a != OPR_RET); i ++) {
+		if ((code[i].f == WRITEA || code[i].f == READA || code[i].f == STOA || code[i].f == LODA) && (code[i].a < 0)){
+			int index = -code[i].a;
+			code[i].a = adr[index-1];
+			code[i].l = pro_level;
+		}
+	}
+} // when the parameter is ID_array
+
+//////////////////////////////////////////////////////////////////////
 int base(int stack[], int currentLevel, int levelDiff)
 {
 	int b = currentLevel;
@@ -1379,87 +1484,6 @@ int base(int stack[], int currentLevel, int levelDiff)
 		b = stack[b];
 	return b;
 } // base
-
-void optimization() {
-    int index = 0;
-    while (index < cx) {
-        instruction current = code[index];
-        instruction last;
-        instruction temp = current;
-        if (current.f == JMP) {
-            //optimization for jump chain
-            do {
-                last = temp;
-                temp = code[temp.a];
-            } while (temp.f == JMP);
-            code[index].a = last.a;
-        }
-
-        index++;
-    }
-    index = 0;
-    while (index < cx) {
-        instruction current = code[index];
-        if (current.f == JG || current.f == JGE || current.f == JEQ ||
-                   current.f == JNE || current.f == JL || current.f == JLE) {
-            //optimization for merge jump
-            if (current.a == index+2) {
-                if (code[index+1].f == JMP) {
-                    switch (current.f) {
-                        case JG:    code[index].f = JLE;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                        case JL:    code[index].f = JGE;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                        case JLE:   code[index].f = JG;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                        case JGE:   code[index].f = JL;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                        case JEQ:   code[index].f = JNE;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                        case JNE:   code[index].f = JEQ;
-                                    code[index].a = code[index+1].a;
-                                    break;
-                    }
-                    for (int i = index+1; i < cx; ++i) {
-                        code[i] = code[i+1];
-                    }
-                    for (int j = 0; j < cx ; ++j) {
-                        if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
-                            code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
-                            if (code[j].a > index) {
-                                code[j].a--;
-                            }
-                        }
-                    }
-                    cx--;
-                }
-            }
-        } else if (current.f == JMP && index) {
-            if (current.a == index + 1) {
-                for (int i = index; i < cx; ++i) {
-                    code[i] = code[i+1];
-                }
-                for (int j = 0; j < cx ; ++j) {
-                    if (code[j].f == JMP || code[j].f == JG || code[j].f == JGE || code[j].f == JEQ ||
-                        code[j].f == JNE || code[j].f == JL || code[j].f == JLE) {
-                        if (code[j].a > index) {
-                            code[j].a--;
-                        }
-                    }
-                }
-                cx--;
-            }
-        }
-
-        index++;
-    }
-
-}
 
 //////////////////////////////////////////////////////////////////////
 // interprets and executes codes.
@@ -1534,7 +1558,7 @@ void interpret()
 			break;
 		case STO:
 			stack[base(stack, b, i.l) + i.a] = stack[top];
-			printf("%d\n", stack[top]);
+			//printf("%d\n", stack[top]);
 			top--;
 			break;
 		case STOA:
